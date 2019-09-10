@@ -1,0 +1,76 @@
+"""Agent implementations."""
+
+from abc import ABC, abstractmethod
+
+
+class Agent(ABC):
+    """Interface of agent implementations."""
+
+    def __init__(self, agent_id, in_neighbors, out_neighbors):
+        """Initialize.
+
+        Parameters
+        ----------
+            agent_id: string
+                ID for the agent.
+            in_neighbors: list of two tuples [(neighbor_id, weight)] or None
+                neighbor_id: string
+                    ID of incoming neighbor
+                weight: float
+                    Connection weight with the neighbor
+            out_neighbors: list of two tuples [(neighbor_id, weight)] or None
+                neighbor_id: string
+                    ID of outgoing neighbor
+                weight: float
+                    Connection weight with the neighbor
+        """
+        self.agent_id = agent_id
+        self.in_neighbors = in_neighbors
+        self.out_neighbors = out_neighbors
+
+    @abstractmethod
+    def step(self, timestep, timepriod, incoming_messages):
+        """Execute a timestep.
+
+        Parameters
+        ----------
+            timestep: float
+                The current timestep.
+            timeperiod: a 2 tuple of floats (start, end)
+                The realtime period corresponding to the given timestep.
+            incoming_messages: list of 2 tuples [(src_id, message)]
+                src_id: ID of the sender agent
+                message: the actual message body.
+
+        Returns
+        -------
+            outgoing_messages: list of 2 tuples [(dst_id, message)]
+                dst_id: ID of the destination agent.
+                message: the actual message body.
+        """
+
+    def memory_usage(self):
+        """Return the memory usage of the agent.
+
+        This method is called at the end of every step.
+
+        Returns
+        -------
+            float
+                Memory usage of the agent in bytes
+        """
+        return 1.0
+
+    def is_alive(self):
+        """Return if the agent is still alive.
+
+        This method is called at the end of every step.
+        It is the agent's responsibility to inform its neighbors that it is dead.
+        Once this method returns false, the agent is deleted and garbage collected.
+
+        Returns
+        -------
+            bool
+                If false, the agent is considered dead.
+        """
+        return True
