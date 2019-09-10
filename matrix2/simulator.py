@@ -1,4 +1,5 @@
 """Simulator implementations."""
+# pylint: disable=dangerous-default-value
 
 from time import time
 from abc import ABC, abstractmethod
@@ -10,7 +11,19 @@ class Simulator(ABC):
 
     @abstractmethod
     def __init__(
-        self, agent_class, agent_population, timestep_generator, agent_distributor_class
+        self,
+        agent_class=None,
+        agent_args=[],
+        agent_kwargs={},
+        agent_population_class=None,
+        agent_population_args=[],
+        agent_population_kwargs={},
+        timestep_generator_class=None,
+        timestep_generator_args=[],
+        timestep_generator_kwargs={},
+        agent_distributor_class=None,
+        agent_distributor_args=[],
+        agent_distributor_kwargs={},
     ):
         """Initialize."""
 
@@ -23,19 +36,50 @@ class SingleProcessSimulator(Simulator):
     """Single process simulator."""
 
     def __init__(
-        self, agent_class, agent_population, timestep_generator, agent_distributor_class
+        self,
+        agent_class=None,
+        agent_args=[],
+        agent_kwargs={},
+        agent_population_class=None,
+        agent_population_args=[],
+        agent_population_kwargs={},
+        timestep_generator_class=None,
+        timestep_generator_args=[],
+        timestep_generator_kwargs={},
+        agent_distributor_class=None,
+        agent_distributor_args=[],
+        agent_distributor_kwargs={},
     ):
         """Initialize."""
         super().__init__(
-            agent_class, agent_population, timestep_generator, agent_distributor_class
+            agent_class,
+            agent_args,
+            agent_kwargs,
+            agent_population_class,
+            agent_population_args,
+            agent_population_kwargs,
+            timestep_generator_class,
+            timestep_generator_args,
+            timestep_generator_kwargs,
+            agent_distributor_class,
+            agent_distributor_args,
+            agent_distributor_kwargs,
         )
 
         self.agent_class = agent_class
-        self.agent_population = agent_population
-        self.timestep_generator = timestep_generator
+        self.agent_population = agent_population_class(
+            *agent_population_args, **agent_population_kwargs
+        )
+        self.timestep_generator = timestep_generator_class(
+            *timestep_generator_args, **timestep_generator_kwargs
+        )
 
         self.agent_distributor = agent_distributor_class(
-            self.agent_population, 1, [0, []]
+            self.agent_population,
+            1,
+            [0, []],
+            *agent_distributor_args,
+            **agent_distributor_kwargs
         )
 
     def run(self):

@@ -38,8 +38,13 @@ def test_simple_simulation():
 
     simulator = SingleProcessSimulator(
         agent_class=SimpleAgent,
-        agent_population=FixedDisconnectedPopulation(n_agents),
-        timestep_generator=RangeTimestepGenerator(n_timesteps),
+
+        agent_population_class=FixedDisconnectedPopulation,
+        agent_population_args=[n_agents],
+
+        timestep_generator_class=RangeTimestepGenerator,
+        timestep_generator_args=[n_timesteps],
+
         agent_distributor_class=UniformAgentDistributor,
     )
 
