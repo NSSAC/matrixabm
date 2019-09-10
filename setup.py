@@ -1,3 +1,5 @@
+"""Setup."""
+
 from setuptools import setup
 
 package_name = "matrix2"
