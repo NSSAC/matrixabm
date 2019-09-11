@@ -6,27 +6,15 @@ from abc import ABC, abstractmethod
 class Agent(ABC):
     """Interface of agent implementations."""
 
-    def __init__(self, agent_id, in_neighbors, out_neighbors):
+    def __init__(self, agent_id):
         """Initialize.
 
         Parameters
         ----------
             agent_id: string
                 ID for the agent.
-            in_neighbors: list of two tuples [(neighbor_id, weight)] or None
-                neighbor_id: string
-                    ID of incoming neighbor
-                weight: float
-                    Connection weight with the neighbor
-            out_neighbors: list of two tuples [(neighbor_id, weight)] or None
-                neighbor_id: string
-                    ID of outgoing neighbor
-                weight: float
-                    Connection weight with the neighbor
         """
         self.agent_id = agent_id
-        self.in_neighbors = in_neighbors
-        self.out_neighbors = out_neighbors
 
     @abstractmethod
     def step(self, timestep, timepriod, incoming_messages):

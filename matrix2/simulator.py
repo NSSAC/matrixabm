@@ -67,7 +67,7 @@ class SingleProcessSimulator(Simulator):
     def run(self):
         """Run the simulation."""
         agents = {}
-        incoming_messages = defaultdict(list)
+        all_received_messages = defaultdict(list)
 
         while True:
             rank_step_start_time = time()
@@ -78,24 +78,22 @@ class SingleProcessSimulator(Simulator):
                 return
 
             # Distribute any new agents
-            for _rank, agent_tuples in self.agent_distributor.distribute(
+            for _rank, agent_constructor_args_list in self.agent_distributor.distribute(
                 timestep, timeperiod
             ):
-                for agent_id, in_neighbors, out_neighbors in agent_tuples:
-                    agents[agent_id] = self.agent_class(
-                        agent_id, in_neighbors, out_neighbors, **self.agent_kwargs
-                    )
+                for agent_id, agent_kwargs in agent_constructor_args_list:
+                    kwargs = dict(self.agent_kwargs)
+                    kwargs.update(agent_kwargs)
+                    agents[agent_id] = self.agent_class(agent_id, **kwargs)
 
             # Step through all the agents
             outgoing_messages = defaultdict(list)
             dead_agents = []
             for agent_id, agent in agents.items():
                 agent_step_start_time = time()
-                received_msgs = incoming_messages[agent_id]
+                received_msgs = all_received_messages[agent_id]
 
-                sent_msgs = agent.step(
-                    timestep, timeperiod, incoming_messages[agent_id]
-                )
+                sent_msgs = agent.step(timestep, timeperiod, received_msgs)
                 for dst_id, message in sent_msgs:
                     outgoing_messages[dst_id].append((agent_id, message))
 
@@ -126,7 +124,7 @@ class SingleProcessSimulator(Simulator):
                 del agents[agent_id]
 
             # Outgoint messages of the current step are incoming for the next
-            incoming_messages = outgoing_messages
+            all_received_messages = outgoing_messages
 
             # Log the rank/process's performance
             rank_step_time = time() - rank_step_start_time

@@ -19,19 +19,11 @@ class Population(ABC):
 
         Returns
         -------
-            list of three tuples [(agent_id, in_neighbors, out_neighbors)]
+            list of two tuples [(agent_id, agent_kwargs)]
                 agent_id: string
                     ID for the agent.
-                in_neighbors: list of two tuples [(neighbor_id, weight)] or None
-                    neighbor_id: string
-                        ID of incoming neighbor
-                    weight: float
-                        Connection weight with the neighbor
-                out_neighbors: list of two tuples [(neighbor_id, weight)] or None
-                    neighbor_id: string
-                        ID of outgoing neighbor
-                    weight: float
-                        Connection weight with the neighbor
+                agent_kwargs: dict
+                    Extra keyword arguments to pass to the agent constructor.
         """
 
     def agent_died(self, agent_id, timestep, timeperiod):
@@ -48,8 +40,8 @@ class Population(ABC):
         """
 
 
-class FixedDisconnectedPopulation(Population):
-    """Fixed and disconnected agent population."""
+class FixedPopulation(Population):
+    """Fixed agent population."""
 
     def __init__(self, agent_ids):
         """Initialize.
@@ -67,6 +59,6 @@ class FixedDisconnectedPopulation(Population):
     def get_new_agents(self, timestep, _timeperiod):
         """Return all agents at timestep 0."""
         if timestep == 0:
-            return [(agent_id, None, None) for agent_id in self.agent_ids]
+            return [(agent_id, {}) for agent_id in self.agent_ids]
 
         return []

@@ -52,21 +52,13 @@ class AgentDistributor(ABC):
 
         Returns
         -------
-            rank_agent_tuples: list of 2 tuples [(rank, agent_tuples)]
+            rank_agent_constructor_args_lists: list of 2 tuples [(rank, agent_tuples)]
                 rank: rank of the compute process.
-                agent_tuples: list of three tuples [(agent_id, in_neighbors, out_neighbors)]
+                agent_constructor_args_list: list of two tuples [(agent_id, agent_kwargs)]
                     agent_id: string
                         ID for the agent.
-                    in_neighbors: list of two tuples [(neighbor_id, weight)] or None
-                        neighbor_id: string
-                            ID of incoming neighbor
-                        weight: float
-                            Connection weight with the neighbor
-                    out_neighbors: list of two tuples [(neighbor_id, weight)] or None
-                        neighbor_id: string
-                            ID of outgoing neighbor
-                        weight: float
-                            Connection weight with the neighbor
+                    agent_kwargs: dict
+                        Extra keyword arguments to pass to the agent constructor
         """
 
     def agent_step_profile(
@@ -131,16 +123,16 @@ class AgentDistributor(ABC):
         return []
 
 
-class UniformAgentDistributor(AgentDistributor):
-    """Distribute agent ids across machines uniformly."""
+class RoundRobinAgentDistributor(AgentDistributor):
+    """Distribute agent ids across ranks in a round robin fashion."""
 
     def distribute(self, timestep, timeperiod):
-        """Distribute new agent ids across processors and ranks."""
-        new_agent_tuples = self.population.get_new_agents(timestep, timeperiod)
-        if new_agent_tuples:
-            rank_agent_tuples = defaultdict(list)
-            for rank, agent_tuple in zip(cycle(range(self.n_ranks)), new_agent_tuples):
-                rank_agent_tuples[rank].append(agent_tuple)
-            return list(rank_agent_tuples.items())
+        """Distribute new agent ids across ranks."""
+        agent_constructor_args_list = self.population.get_new_agents(timestep, timeperiod)
+        if agent_constructor_args_list:
+            rank_agent_constructor_args_lists = defaultdict(list)
+            for rank, agent_constructor_args in zip(cycle(range(self.n_ranks)), agent_constructor_args_list):
+                rank_agent_constructor_args_lists[rank].append(agent_constructor_args)
+            return list(rank_agent_constructor_args_lists.items())
 
         return []
