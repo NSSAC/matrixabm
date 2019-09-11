@@ -13,32 +13,23 @@ class Simulator(ABC):
     def __init__(
         self,
         agent_class=None,
-        agent_args=[],
         agent_kwargs={},
         agent_population_class=None,
-        agent_population_args=[],
         agent_population_kwargs={},
         timestep_generator_class=None,
-        timestep_generator_args=[],
         timestep_generator_kwargs={},
         agent_distributor_class=None,
-        agent_distributor_args=[],
         agent_distributor_kwargs={},
     ):
         """Initialize."""
         self.agent_class = agent_class
-        self.agent_args = agent_args
         self.agent_kwargs = agent_kwargs
         self.agent_population_class = agent_population_class
-        self.agent_population_args = agent_population_args
         self.agent_population_kwargs = agent_population_kwargs
         self.timestep_generator_class = timestep_generator_class
-        self.timestep_generator_args = timestep_generator_args
         self.timestep_generator_kwargs = timestep_generator_kwargs
         self.agent_distributor_class = agent_distributor_class
-        self.agent_distributor_args = agent_distributor_args
         self.agent_distributor_kwargs = agent_distributor_kwargs
-
 
         if self.agent_class is None:
             raise ValueError("Agent class not specified")
@@ -62,19 +53,15 @@ class SingleProcessSimulator(Simulator):
         super().__init__(*args, **kwargs)
 
         self.agent_population = self.agent_population_class(
-            *self.agent_population_args, **self.agent_population_kwargs
+            **self.agent_population_kwargs
         )
 
         self.timestep_generator = self.timestep_generator_class(
-            *self.timestep_generator_args, **self.timestep_generator_kwargs
+            **self.timestep_generator_kwargs
         )
 
         self.agent_distributor = self.agent_distributor_class(
-            self.agent_population,
-            1,
-            [0, []],
-            *self.agent_distributor_args,
-            **self.agent_distributor_kwargs
+            self.agent_population, 1, [0, []], **self.agent_distributor_kwargs
         )
 
     def run(self):
@@ -96,11 +83,7 @@ class SingleProcessSimulator(Simulator):
             ):
                 for agent_id, in_neighbors, out_neighbors in agent_tuples:
                     agents[agent_id] = self.agent_class(
-                        agent_id,
-                        in_neighbors,
-                        out_neighbors,
-                        *self.agent_args,
-                        **self.agent_kwargs
+                        agent_id, in_neighbors, out_neighbors, **self.agent_kwargs
                     )
 
             # Step through all the agents

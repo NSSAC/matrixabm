@@ -40,10 +40,10 @@ def test_simple_simulation():
         agent_class=SimpleAgent,
 
         agent_population_class=FixedDisconnectedPopulation,
-        agent_population_args=[n_agents],
+        agent_population_kwargs={"agent_ids": n_agents},
 
         timestep_generator_class=RangeTimestepGenerator,
-        timestep_generator_args=[n_timesteps],
+        timestep_generator_kwargs={"n_timesteps": n_timesteps},
 
         agent_distributor_class=UniformAgentDistributor,
     )
