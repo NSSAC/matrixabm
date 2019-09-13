@@ -5,6 +5,7 @@ from matrix2.agent_population import FixedPopulation
 from matrix2.timestep_generator import RangeTimestepGenerator
 from matrix2.agent_distributor import RoundRobinAgentDistributor
 from matrix2.simulator import SingleProcessSimulator
+from matrix2.mpi_simulator import MPISimulator
 
 
 class SimpleAgent(Agent):
@@ -22,6 +23,8 @@ class SimpleAgent(Agent):
     def step(self, timestep, _timeperiod, incoming_messages):
         """Sleep between 1 second."""
 
+        print(f"agent_id={self.agent_id}, timestep={timestep}, incoming_messages={incoming_messages}")
+
         if timestep == 0:
             assert len(incoming_messages) == 0
         else:
@@ -36,21 +39,36 @@ class SimpleAgent(Agent):
         return self._is_alive
 
 
-def test_simple_simulation():
-    """Run an instance of the simple simulation."""
-    n_agents = 10
-    n_timesteps = 10
+def test_single_process():
+    """Run simple simulation on single process."""
+    n_agents = 100
+    n_timesteps = 100
 
     simulator = SingleProcessSimulator(
         agent_class=SimpleAgent,
         agent_kwargs={"n_agents": n_agents, "n_timesteps": n_timesteps},
-
         agent_population_class=FixedPopulation,
         agent_population_kwargs={"agent_ids": n_agents},
-
         timestep_generator_class=RangeTimestepGenerator,
         timestep_generator_kwargs={"n_timesteps": n_timesteps},
+        agent_distributor_class=RoundRobinAgentDistributor,
+    )
 
+    simulator.run()
+
+
+def test_mpi():
+    """Run simple simulation on multiprocess."""
+    n_agents = 2
+    n_timesteps = 2
+
+    simulator = MPISimulator(
+        agent_class=SimpleAgent,
+        agent_kwargs={"n_agents": n_agents, "n_timesteps": n_timesteps},
+        agent_population_class=FixedPopulation,
+        agent_population_kwargs={"agent_ids": n_agents},
+        timestep_generator_class=RangeTimestepGenerator,
+        timestep_generator_kwargs={"n_timesteps": n_timesteps},
         agent_distributor_class=RoundRobinAgentDistributor,
     )
 
