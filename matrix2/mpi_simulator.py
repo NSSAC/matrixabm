@@ -301,6 +301,9 @@ class MPISimulator(Simulator):
         self.w_incoming_messages = defaultdict(list)
         self.w_workers_done = 0
 
+        # Wait for everyone to finish
+        COMM_WORLD.Barrier()
+
     def _worker_step_agent(self, comm, timestep, timeperiod, agent_id, agent):
         """Step through one local agent."""
         agent_step_start_time = time()

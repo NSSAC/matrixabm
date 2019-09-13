@@ -21,9 +21,7 @@ class SimpleAgent(Agent):
         super().__init__(*args, **kwargs)
 
     def step(self, timestep, _timeperiod, incoming_messages):
-        """Sleep between 1 second."""
-
-        print(f"agent_id={self.agent_id}, timestep={timestep}, incoming_messages={incoming_messages}")
+        """Say hello to everyone."""
 
         if timestep == 0:
             assert len(incoming_messages) == 0
@@ -33,7 +31,7 @@ class SimpleAgent(Agent):
         if timestep == float(self.n_timesteps - 1):
             self._is_alive = False
 
-        return [(i, "hello") for i in range(self.n_agents)]
+        return [(dst_id, (self.agent_id, timestep, "hello")) for dst_id in range(self.n_agents)]
 
     def is_alive(self):
         return self._is_alive
@@ -59,8 +57,8 @@ def test_single_process():
 
 def test_mpi():
     """Run simple simulation on multiprocess."""
-    n_agents = 2
-    n_timesteps = 2
+    n_agents = 100
+    n_timesteps = 100
 
     simulator = MPISimulator(
         agent_class=SimpleAgent,
