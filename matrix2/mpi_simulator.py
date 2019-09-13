@@ -315,8 +315,11 @@ class MPISimulator(Simulator):
         # Send out the messages to other agents
         for dst_id, message in sent_msgs:
             dst_rank = self.w_agent_id_location[dst_id]
-            msg = (Message.AGENT_TO_AGENT, (agent_id, dst_id, message))
-            comm.send(to=dst_rank, msg=msg)
+            if dst_rank == WORLD_RANK:
+                self.w_incoming_messages[dst_id].append((agent_id, message))
+            else:
+                msg = (Message.AGENT_TO_AGENT, (agent_id, dst_id, message))
+                comm.send(to=dst_rank, msg=msg)
 
         # Check if the agent is alive
         if not agent.is_alive():
