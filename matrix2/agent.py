@@ -17,7 +17,7 @@ class Agent(ABC):
         self.agent_id = agent_id
 
     @abstractmethod
-    def step(self, timestep, timepriod, incoming_messages):
+    def step(self, timestep, timeperiod, incoming_messages):
         """Execute a timestep.
 
         Parameters
