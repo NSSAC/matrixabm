@@ -1,10 +1,12 @@
 """Simulator implementations."""
 # pylint: disable=dangerous-default-value
 
+import logging
 from time import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
 
+log = logging.getLogger(__name__)
 
 class Simulator(ABC):
     """Simulator implementations."""
@@ -64,6 +66,8 @@ class SingleProcessSimulator(Simulator):
 
     def run(self):
         """Run the simulation."""
+        sim_start_time = time()
+
         agents = {}
         all_received_messages = defaultdict(list)
 
@@ -73,7 +77,12 @@ class SingleProcessSimulator(Simulator):
             # Get the current timestep
             timestep, timeperiod = self.timestep_generator.get_next_timestep()
             if timestep is None:
+                sim_end_time = time()
+                log.info("Total sim runtime: %f seconds", sim_end_time - sim_start_time)
                 return
+
+            # Log the start of timestep
+            log.info("Starting timestep %f: (%f, %f)", timestep, timeperiod[0], timeperiod[1])
 
             # Distribute any new agents
             for _rank, agent_constructor_args_list in self.agent_distributor.distribute(
@@ -125,3 +134,4 @@ class SingleProcessSimulator(Simulator):
             # Log the rank/process's performance
             rank_step_time = time() - rank_step_start_time
             self.agent_distributor.rank_step_profile(0, timestep, rank_step_time)
+

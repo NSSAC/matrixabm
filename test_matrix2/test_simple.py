@@ -1,5 +1,7 @@
 """Simple simulation."""
 
+import time
+
 from matrix2.agent import Agent
 from matrix2.agent_population import FixedPopulation
 from matrix2.timestep_generator import RangeTimestepGenerator
@@ -30,6 +32,8 @@ class SimpleAgent(Agent):
 
         if timestep == float(self.n_timesteps - 1):
             self._is_alive = False
+
+        time.sleep(0.001)
 
         return [(dst_id, (self.agent_id, timestep, "hello")) for dst_id in range(self.n_agents)]
 

@@ -1,22 +1,29 @@
 """MPI Simulatior implementation."""
 
+import pickle
 from time import time
 from enum import IntEnum, auto
 import queue
 import threading
 from collections import defaultdict
-import logging as log
+import logging
 
 from mpi4py import MPI
+from more_itertools import chunked
 
 from .simulator import Simulator
+
+log = logging.getLogger(__name__)
 
 COMM_WORLD = MPI.COMM_WORLD
 HOSTNAME = MPI.Get_processor_name()
 WORLD_RANK = COMM_WORLD.Get_rank()
 WORLD_SIZE = COMM_WORLD.Get_size()
 MASTER_RANK = 0
-
+SEND_CACHE_SIZE = 10000
+BUFFER_SIZE = 1048576  # 1MB
+# BUFFER_SIZE = 4096 # 1K
+PENDING_SEND_CLEANUP_AFTER = 100
 
 class Message(IntEnum):
     """Message types."""
@@ -32,37 +39,79 @@ class Message(IntEnum):
     WORKER_DONE = auto()
 
 
+def pickle_adaptive_dumps(objs):
+    """Make sure that the dumped pickles are within BUFFER_SIZE."""
+    n = len(objs)
+    assert n >= 1
+
+    while True:
+        pkls = [pickle.dumps(group) for group in chunked(objs, n)]
+        max_size = max(map(len, pkls))
+        if max_size < BUFFER_SIZE:
+            return pkls
+
+        log.warning("%d objects dont fit into %d bytes", n, BUFFER_SIZE)
+        if n == 1:
+            raise RuntimeError("Cant fit data into buffer")
+
+        n = int(n / 2)
+
+
 class Comm:
     """Communicator wrapper."""
 
     def __init__(self):
         """Initialize."""
         self.msgq = queue.Queue()
-        self.pending_sends = []
+        self.pending_msg_cache = [list() for _ in range(WORLD_SIZE)]
+        self.pending_send_reqs = []
         self.receiver_thread = threading.Thread(target=self._receiver_thread)
 
         self.receiver_thread.start()
 
-    def _cleanup_pending_sends(self):
+    def _cleanup_pending_sends(self, wait):
         """Cleanup any pending sends that are done."""
-        if self.pending_sends:
-            indices = MPI.Request.Waitsome(self.pending_sends)
-            if indices is not None:
-                self.pending_sends = [
-                    r for i, r in enumerate(self.pending_sends) if i not in indices
-                ]
+        if self.pending_send_reqs:
+            if wait:
+                MPI.Request.Waitall(self.pending_send_reqs)
+                self.pending_send_reqs = []
+            else:
+                if len(self.pending_send_reqs) > PENDING_SEND_CLEANUP_AFTER:
+                    indices = MPI.Request.Waitsome(self.pending_send_reqs)
+                    if indices is not None:
+                        self.pending_send_reqs = [
+                            r
+                            for i, r in enumerate(self.pending_send_reqs)
+                            if i not in indices
+                        ]
+
+    def _do_send(self, to):
+        """Send all messages that have been cached."""
+        if self.pending_msg_cache[to]:
+            messages = self.pending_msg_cache[to]
+            pkls = pickle_adaptive_dumps(messages)
+            for pkl in pkls:
+                if __debug__:
+                    log.debug("Sending %d bytes to %d", len(pkl), to)
+                req = COMM_WORLD.Isend([pkl, MPI.CHAR], dest=to)
+                self.pending_send_reqs.append(req)
+            self.pending_msg_cache[to] = []
 
     def send(self, to, msg):
         """Send a messge."""
-        self._cleanup_pending_sends()
+        self.pending_msg_cache[to].append(msg)
+        if len(self.pending_msg_cache[to]) == SEND_CACHE_SIZE:
+            self._do_send(to)
+            self._cleanup_pending_sends(wait=False)
 
-        req = COMM_WORLD.isend(msg, dest=to)
-        self.pending_sends.append(req)
+    def flush(self):
+        """Flush out the cached messages."""
+        for to in range(WORLD_SIZE):
+            self._do_send(to)
+        self._cleanup_pending_sends(wait=False)
 
     def recv(self, wait=True):
         """Receive a message."""
-        self._cleanup_pending_sends()
-
         if wait:
             return [self.msgq.get()]
 
@@ -81,24 +130,25 @@ class Comm:
     def finish(self):
         """Make sure all the pending messages are sent."""
         self.send(to=WORLD_RANK, msg=(Message.TERMINATE, None))
-
-        if self.pending_sends:
-            MPI.Request.Waitall(self.pending_sends)
-            self.pending_sends = []
-
+        self.flush()
+        self._cleanup_pending_sends(wait=True)
         self.receiver_thread.join()
 
     def _receiver_thread(self):
         """Code for the receiver thread."""
         while True:
-            req = COMM_WORLD.irecv()
-            type_, value = req.wait()
+            buf = bytearray(BUFFER_SIZE)
+            COMM_WORLD.Irecv([buf, MPI.CHAR]).wait()
+            messages = pickle.loads(buf)
             if __debug__:
-                log.debug("Rank %d received %s", WORLD_RANK, type_)
-            if type_ == Message.TERMINATE:
-                return
+                log.debug("Received %d messages", len(messages))
+            for type_, value in messages:
+                if __debug__:
+                    log.debug("Rank %d received %s", WORLD_RANK, type_)
+                if type_ == Message.TERMINATE:
+                    return
 
-            self.msgq.put((type_, value))
+                self.msgq.put((type_, value))
 
 
 class MPISimulator(Simulator):
@@ -178,7 +228,9 @@ class MPISimulator(Simulator):
 
     def _master_run(self, comm):
         """Start the master thread."""
-        log.info("Rank %d master is starting", WORLD_RANK)
+        sim_start_time = time()
+        if __debug__:
+            log.debug("Rank %d master is starting", WORLD_RANK)
 
         while True:
             # Get the current timestep
@@ -187,8 +239,14 @@ class MPISimulator(Simulator):
             if timestep is None:
                 # We are done
                 comm.bcast_master((None, None, None, None))
-                log.info("Rank %d master is exiting", WORLD_RANK)
+                if __debug__:
+                    log.debug("Rank %d master is exiting", WORLD_RANK)
+                sim_end_time = time()
+                log.info("Total sim runtime: %f seconds", sim_end_time - sim_start_time)
                 return
+
+            # Log the start of timestep
+            log.info("Starting timestep %f: (%f, %f)", timestep, timeperiod[0], timeperiod[1])
 
             # Get the new rank_agents_tuples
             rank_agent_constructor_kwargs_lists = self.m_agent_distributor.distribute(
@@ -215,7 +273,8 @@ class MPISimulator(Simulator):
 
     def _worker_run(self, comm):
         """Start the worker thread."""
-        log.info("Rank %d worker is starting", WORLD_RANK)
+        if __debug__:
+            log.debug("Rank %d worker is starting", WORLD_RANK)
 
         while True:
             # Get the data from master
@@ -228,11 +287,14 @@ class MPISimulator(Simulator):
 
             # We are done
             if timestep is None:
-                log.info("Rank %d worker is exiting", WORLD_RANK)
+                if __debug__:
+                    log.debug("Rank %d worker is exiting", WORLD_RANK)
                 return
 
             if __debug__:
-                log.debug("Rank %d start timestep %f (%s)", WORLD_RANK, timestep, timeperiod)
+                log.debug(
+                    "Rank %d start timestep %f (%s)", WORLD_RANK, timestep, timeperiod
+                )
 
             # Run the worker's step
             self._worker_step_local_agents(
@@ -270,7 +332,9 @@ class MPISimulator(Simulator):
         self._update_agent_id_rank(dead_agents, rank_agent_constructor_kwargs_lists)
 
         if __debug__:
-            log.debug("Rank %d # total agents %d", WORLD_RANK, len(self.w_agent_id_location))
+            log.debug(
+                "Rank %d # total agents %d", WORLD_RANK, len(self.w_agent_id_location)
+            )
 
         # Iterate over the agents
         for agent_id, agent in self.w_local_agents.items():
@@ -281,6 +345,9 @@ class MPISimulator(Simulator):
             for type_, value in comm.recv(wait=False):
                 self._process_incoming_message(type_, value)
 
+        if __debug__:
+            log.debug("Rank # Done iterating over agents")
+
         # Log process's profile
         rank_step_time = time() - rank_step_start_time
         msg = (Message.RANK_STEP_PROFILE, (WORLD_RANK, timestep, rank_step_time))
@@ -290,6 +357,9 @@ class MPISimulator(Simulator):
         msg = (Message.WORKER_DONE, WORLD_RANK)
         for rank in range(WORLD_SIZE):
             comm.send(to=rank, msg=msg)
+
+        # Flush out the comm cache
+        comm.flush()
 
         # While not all ranks are done
         while self.w_workers_done < WORLD_SIZE:
@@ -384,6 +454,12 @@ class MPISimulator(Simulator):
         for rank, agent_constructor_kwargs_list in rank_agent_constructor_kwargs_lists:
             if rank == WORLD_RANK:
                 if __debug__:
-                    log.debug("Rank %d # new local agents %d", WORLD_RANK, len(agent_constructor_kwargs_list))
+                    log.debug(
+                        "Rank %d # new local agents %d",
+                        WORLD_RANK,
+                        len(agent_constructor_kwargs_list),
+                    )
                 for agent_id, agent_constructor_kwargs in agent_constructor_kwargs_list:
-                    self.w_local_agents[agent_id] = self.agent_class(agent_id, **agent_constructor_kwargs)
+                    self.w_local_agents[agent_id] = self.agent_class(
+                        agent_id, **agent_constructor_kwargs
+                    )
