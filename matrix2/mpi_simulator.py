@@ -386,6 +386,4 @@ class MPISimulator(Simulator):
                 if __debug__:
                     log.debug("Rank %d # new local agents %d", WORLD_RANK, len(agent_constructor_kwargs_list))
                 for agent_id, agent_constructor_kwargs in agent_constructor_kwargs_list:
-                    kwargs = dict(self.agent_kwargs)
-                    kwargs.update(agent_constructor_kwargs)
-                    self.w_local_agents[agent_id] = self.agent_class(agent_id, **kwargs)
+                    self.w_local_agents[agent_id] = self.agent_class(agent_id, **agent_constructor_kwargs)

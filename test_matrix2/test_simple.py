@@ -11,11 +11,11 @@ from matrix2.mpi_simulator import MPISimulator
 class SimpleAgent(Agent):
     """Simple agent."""
 
+    n_agents = None
+    n_timesteps = None
+
     def __init__(self, *args, **kwargs):
         """Initialize."""
-
-        self.n_agents = kwargs.pop("n_agents")
-        self.n_timesteps = kwargs.pop("n_timesteps")
         self._is_alive = True
 
         super().__init__(*args, **kwargs)
@@ -42,9 +42,11 @@ def test_single_process():
     n_agents = 100
     n_timesteps = 100
 
+    SimpleAgent.n_agents = n_agents
+    SimpleAgent.n_timesteps = n_timesteps
+
     simulator = SingleProcessSimulator(
         agent_class=SimpleAgent,
-        agent_kwargs={"n_agents": n_agents, "n_timesteps": n_timesteps},
         agent_population_class=FixedPopulation,
         agent_population_kwargs={"agent_ids": n_agents},
         timestep_generator_class=RangeTimestepGenerator,
@@ -60,9 +62,11 @@ def test_mpi():
     n_agents = 100
     n_timesteps = 100
 
+    SimpleAgent.n_agents = n_agents
+    SimpleAgent.n_timesteps = n_timesteps
+
     simulator = MPISimulator(
         agent_class=SimpleAgent,
-        agent_kwargs={"n_agents": n_agents, "n_timesteps": n_timesteps},
         agent_population_class=FixedPopulation,
         agent_population_kwargs={"agent_ids": n_agents},
         timestep_generator_class=RangeTimestepGenerator,

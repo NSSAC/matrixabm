@@ -13,7 +13,6 @@ class Simulator(ABC):
     def __init__(
         self,
         agent_class=None,
-        agent_kwargs={},
         agent_population_class=None,
         agent_population_kwargs={},
         timestep_generator_class=None,
@@ -23,7 +22,6 @@ class Simulator(ABC):
     ):
         """Initialize."""
         self.agent_class = agent_class
-        self.agent_kwargs = agent_kwargs
         self.agent_population_class = agent_population_class
         self.agent_population_kwargs = agent_population_kwargs
         self.timestep_generator_class = timestep_generator_class
@@ -82,9 +80,7 @@ class SingleProcessSimulator(Simulator):
                 timestep, timeperiod
             ):
                 for agent_id, agent_kwargs in agent_constructor_args_list:
-                    kwargs = dict(self.agent_kwargs)
-                    kwargs.update(agent_kwargs)
-                    agents[agent_id] = self.agent_class(agent_id, **kwargs)
+                    agents[agent_id] = self.agent_class(agent_id, **agent_kwargs)
 
             # Step through all the agents
             outgoing_messages = defaultdict(list)
