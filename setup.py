@@ -30,7 +30,7 @@ setup(
         "toml",
         "more-itertools",
         "sortedcontainers"
-        # "mpi4py",
+        "mpi4py",
     ],
 
     url="http://github.com/nssac/matrix2",
