@@ -28,6 +28,8 @@ setup(
         "click_completion",
         "logbook",
         "toml",
+        "more-itertools",
+        "sortedcontainers"
         # "mpi4py",
     ],
 

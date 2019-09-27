@@ -69,6 +69,7 @@ class AgentDistributor(ABC):
         memory_usage,
         received_msg_sizes,
         sent_msg_sizes,
+        update_size
     ):
         """Note the compute and message load of an agent on a given timestep.
 
@@ -88,6 +89,8 @@ class AgentDistributor(ABC):
             sent_msg_sizes: list of 2 tuples [(dst_id, msg_size)]
                 dst_id: ID of the receiver agent.
                 msg_size: Size of the message.
+            update_size: int
+                number of global updates generated
         """
 
     def rank_step_profile(self, rank, timestep, step_time):

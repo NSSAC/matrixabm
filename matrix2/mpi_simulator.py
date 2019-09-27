@@ -412,6 +412,7 @@ class MPISimulator(Simulator):
                 memory_usage,
                 received_msg_sizes,
                 sent_msg_sizes,
+                None
             ),
         )
         comm.send(to=MASTER_RANK, msg=msg)

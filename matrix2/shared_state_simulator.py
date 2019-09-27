@@ -1,15 +1,14 @@
-"""Simulator implementations."""
+"""Shared state simulator implementations."""
 # pylint: disable=dangerous-default-value
 
-import logging
 from time import time
+import logging
 from abc import ABC, abstractmethod
-from collections import defaultdict
 
 log = logging.getLogger(__name__)
 
-class Simulator(ABC):
-    """Simulator implementations."""
+class SharedStateSimulator(ABC):
+    """Shared state simulator implementation interface."""
 
     @abstractmethod
     def __init__(
@@ -21,6 +20,8 @@ class Simulator(ABC):
         timestep_generator_kwargs={},
         agent_distributor_class=None,
         agent_distributor_kwargs={},
+        state_store_classes=[],
+        state_store_kwargs=[]
     ):
         """Initialize."""
         self.agent_class = agent_class
@@ -30,6 +31,8 @@ class Simulator(ABC):
         self.timestep_generator_kwargs = timestep_generator_kwargs
         self.agent_distributor_class = agent_distributor_class
         self.agent_distributor_kwargs = agent_distributor_kwargs
+        self.state_store_classes = state_store_classes
+        self.state_store_kwargs = state_store_kwargs
 
         if self.agent_class is None:
             raise ValueError("Agent class not specified")
@@ -39,14 +42,15 @@ class Simulator(ABC):
             raise ValueError("Timestep generator class not specified")
         if self.agent_distributor_class is None:
             raise ValueError("Agent distributor class not specified")
+        if len(self.state_store_classes) != len(self.state_store_kwargs):
+            raise ValueError("Mismatch between the state store classes and their constructor kwargs")
 
     @abstractmethod
     def run(self):
         """Run the simulation."""
 
-
-class SingleProcessSimulator(Simulator):
-    """Single process simulator."""
+class SingleProcessSharedStateSimulator(SharedStateSimulator):
+    """Single process shared state simulator."""
 
     def __init__(self, *args, **kwargs):
         """Initialize."""
@@ -64,12 +68,20 @@ class SingleProcessSimulator(Simulator):
             self.agent_population, 1, [0, []], **self.agent_distributor_kwargs
         )
 
+        self.state_stores = {}
+        for class_, kwargs in zip(self.state_store_classes, self.state_store_kwargs):
+            store = class_(**kwargs)
+            self.state_stores[store.store_name] = store
+
     def run(self):
         """Run the simulation."""
         sim_start_time = time()
 
         agents = {}
-        all_received_messages = defaultdict(list)
+
+        # Run the init function
+        for store in self.state_stores.values():
+            store.run_init()
 
         while True:
             rank_step_start_time = time()
@@ -92,15 +104,12 @@ class SingleProcessSimulator(Simulator):
                     agents[agent_id] = self.agent_class(agent_id, **agent_kwargs)
 
             # Step through all the agents
-            outgoing_messages = defaultdict(list)
             dead_agents = []
             for agent_id, agent in agents.items():
                 agent_step_start_time = time()
-                received_msgs = all_received_messages[agent_id]
-
-                sent_msgs = agent.step(timestep, timeperiod, received_msgs)
-                for dst_id, message in sent_msgs:
-                    outgoing_messages[dst_id].append((agent_id, message))
+                updates = agent.step(timestep, timeperiod)
+                for store_name, order_key, update in updates:
+                    self.state_stores[store_name].handle_update(order_key, update)
 
                 if not agent.is_alive():
                     dead_agents.append(agent_id)
@@ -108,29 +117,29 @@ class SingleProcessSimulator(Simulator):
                 # Log the agent's performance
                 agent_step_time = time() - agent_step_start_time
                 memory_usage = agent.memory_usage()
-                received_msg_sizes = [
-                    (src_id, len(message)) for src_id, message in received_msgs
-                ]
-                sent_msg_sizes = [
-                    (dst_id, len(message)) for dst_id, message in sent_msgs
-                ]
+                num_updates = len(updates)
                 self.agent_distributor.agent_step_profile(
                     agent_id,
                     timestep,
                     agent_step_time,
                     memory_usage,
-                    received_msg_sizes,
-                    sent_msg_sizes,
-                    None
+                    None,
+                    None,
+                    num_updates
                 )
+
+            # Flush the stores
+            for store in self.state_stores.values():
+                store.flush()
+
+            # Run the maintainance function
+            for store in self.state_stores.values():
+                store.run_maint()
 
             # Remove any dead agents
             for agent_id in dead_agents:
                 self.agent_distributor.agent_died(agent_id, timestep, timeperiod)
                 del agents[agent_id]
-
-            # Outgoint messages of the current step are incoming for the next
-            all_received_messages = outgoing_messages
 
             # Log the rank/process's performance
             rank_step_time = time() - rank_step_start_time
