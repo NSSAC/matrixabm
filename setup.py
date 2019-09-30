@@ -29,7 +29,7 @@ setup(
         "logbook",
         "more-itertools",
         "python-dateutil",
-        "sortedcontainers"
+        "sortedcontainers",
         "mpi4py",
     ],
 
