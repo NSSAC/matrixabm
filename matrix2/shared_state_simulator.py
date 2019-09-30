@@ -56,6 +56,11 @@ class SingleProcessSharedStateSimulator(SharedStateSimulator):
         """Initialize."""
         super().__init__(*args, **kwargs)
 
+        self.state_stores = {}
+        for class_, kwargs in zip(self.state_store_classes, self.state_store_kwargs):
+            store = class_(**kwargs)
+            self.state_stores[store.store_name] = store
+
         self.agent_population = self.agent_population_class(
             **self.agent_population_kwargs
         )
@@ -67,11 +72,6 @@ class SingleProcessSharedStateSimulator(SharedStateSimulator):
         self.agent_distributor = self.agent_distributor_class(
             self.agent_population, 1, [0, []], **self.agent_distributor_kwargs
         )
-
-        self.state_stores = {}
-        for class_, kwargs in zip(self.state_store_classes, self.state_store_kwargs):
-            store = class_(**kwargs)
-            self.state_stores[store.store_name] = store
 
     def run(self):
         """Run the simulation."""
