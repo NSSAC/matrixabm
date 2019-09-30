@@ -27,8 +27,8 @@ setup(
         "click",
         "click_completion",
         "logbook",
-        "toml",
         "more-itertools",
+        "python-dateutil",
         "sortedcontainers"
         "mpi4py",
     ],
