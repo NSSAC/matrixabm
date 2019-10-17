@@ -54,9 +54,11 @@ class AsyncSender:
         """Send a messge."""
         self._buffer[to].append(msg)
 
-        if len(self._buffer[to]) == SEND_BUFFER_SIZE:
-            self._do_send(to)
-            self._cleanup_finished_sends()
+        if len(self._buffer[to]) < SEND_BUFFER_SIZE:
+            return
+
+        self._do_send(to)
+        self._cleanup_finished_sends()
 
     def flush(self, wait=True):
         """Flush out message buffers."""
@@ -94,8 +96,8 @@ class AsyncSender:
         indices = MPI.Request.Waitsome(self._pending_sends)
         if indices is None:
             return
-        indices = set(indices)
 
+        indices = set(indices)
         self._pending_sends = [
             r for i, r in enumerate(self._pending_sends) if i not in indices
         ]
@@ -114,7 +116,7 @@ class AsyncReceiver:
 
     def __init__(self):
         """Initialize."""
-        self._msgq = queue.Queue()
+        self.msgq = queue.Queue()
         self._buf = bytearray(RECV_BUFFER_SIZE)
 
         self._receiver_thread = threading.Thread(target=self._keep_receiving)
@@ -122,7 +124,7 @@ class AsyncReceiver:
 
     def recv(self, block=True):
         """Receive a message."""
-        return self._msgq.get(block=block)
+        return self.msgq.get(block=block)
 
     def join(self):
         """Wait for the receiver thread to end."""
@@ -141,7 +143,7 @@ class AsyncReceiver:
                     stop_receiver = True
                     continue
 
-                self._msgq.put(message)
+                self.msgq.put(message)
 
 
 class AsyncCommunicator:
@@ -152,11 +154,17 @@ class AsyncCommunicator:
         self._sender = AsyncSender()
         self._receiver = AsyncReceiver()
 
-        self.send = self._sender.send
         self.flush = self._sender.flush
 
         self.recv = self._receiver.recv
         self.join = self._receiver.join
+
+    def send(self, to, msg):
+        """Send a messge."""
+        if to == WORLD_RANK:
+            self._receiver.msgq.put(msg)
+        else:
+            self._sender.send(to, msg)
 
     def finish(self):
         """Flush the sender and wait for receiver thread to finish."""
@@ -164,7 +172,7 @@ class AsyncCommunicator:
         self._sender.flush()
         self._receiver.join()
 
-        qsize = self._receiver._msgq.qsize()  # pylint: disable=protected-access
+        qsize = self._receiver.msgq.qsize()
         if qsize:
             log.warning(
                 "Communicator finished with %d messages still in receiver queue", qsize
