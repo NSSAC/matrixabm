@@ -29,8 +29,7 @@ setup(
         "logbook",
         "more-itertools",
         "python-dateutil",
-        "sortedcontainers"
-        "mpi4py",
+        "xactor"
     ],
 
     url="http://github.com/nssac/matrix2",
