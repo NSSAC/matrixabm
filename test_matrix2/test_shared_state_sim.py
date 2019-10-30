@@ -3,9 +3,8 @@
 import time
 import random
 
-from matrix2.shared_state_agent import SharedStateAgent
+from matrix2.shared_state_stores import SQLite3Store, get_sqlite3_connection
 from matrix2.shared_state_simulator import SingleProcessSharedStateSimulator
-from matrix2.shared_state_store import SQLite3Store, get_sqlite3_connection
 
 from matrix2.agent_population import FixedPopulation
 from matrix2.timestep_generator import RangeTimestepGenerator

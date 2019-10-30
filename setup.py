@@ -29,7 +29,8 @@ setup(
         "logbook",
         "more-itertools",
         "python-dateutil",
-        "xactor"
+        "xactor",
+        "tensorboardx"
     ],
 
     url="http://github.com/nssac/matrix2",
