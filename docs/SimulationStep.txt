@@ -1,0 +1,39 @@
+title Simulation Step
+
+Main->Population: create_agents
+Main->Coordinator: step
+Main->Runner[i]: step
+Main->Runner[j]: step
+Population->Coordinator: create_agent*
+Population->Coordinator: create_agent_done
+note over Coordinator: Run Load Balancer
+Coordinator->Runner[i]: create_agent*
+Coordinator->Runner[j]: create_agent*
+Coordinator->Runner[i]: create_agent_done
+Coordinator->Runner[j]: create_agent_done
+Coordinator->Runner[i]: move_agent*
+Coordinator->Runner[j]: move_agent*
+Coordinator->Runner[i]: move_agent_done
+Coordinator->Runner[j]: move_agent_done
+Runner[i]->Runner[j]: receive_agent*
+Runner[j]->Runner[i]: receive_agent*
+Runner[i]->Runner[j]: receive_agent_done
+Runner[j]->Runner[i]: receive_agent_done
+note over Runner[i],Runner[j]: Step through local agents
+Runner[i]->Store[i]: handle_update*
+Runner[i]->Store[j]: handle_update*
+Runner[i]->Coordinator: agent_step_profile*
+Runner[j]->Store[i]: handle_update*
+Runner[j]->Store[j]: handle_update*
+Runner[j]->Coordinator: agent_step_profile*
+Runner[i]->Store[i]: handle_update_done
+Runner[i]->Store[j]: handle_update_done
+Runner[i]->Coordinator: agent_step_profile_done
+Runner[j]->Store[i]: handle_update_done
+Runner[j]->Store[j]: handle_update_done
+Runner[j]->Coordinator: agent_step_profile_done
+note over Store[i],Store[j]: Flush update cache
+Store[i]->Main: store_flush_done
+Store[j]->Main: store_flush_done
+Coordinator->Main: coordinator_done
+note over Main: Start next step

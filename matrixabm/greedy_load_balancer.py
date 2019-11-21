@@ -1,8 +1,17 @@
-"""A greedy load balancer."""
+"""A greedy load balancer.
+
+This load balancer on every balance step
+greedily moves objects from the most loaded bucket
+to the least loaded bucket.
+This process continues until the imbalance
+is below a tolerence threshold.
+"""
 
 import heapq
 import random
 import numpy as np
+
+from .load_balancer import LoadBalancer
 
 LAMBDA_A = 0.9
 LAMBDA_B = 0.9
@@ -10,12 +19,12 @@ LAMBDA = 0.9
 IMBALANCE_TOL = 0.05
 
 
-class GreedyBalancer:
+class GreedyLoadBalancer(LoadBalancer):
     """Simple greedy load balancer."""
 
     def __init__(self, n_buckets):
         """Initialize."""
-        self.n_buckets = int(n_buckets)
+        super().__init__(n_buckets)
         self.bucket_objects = [set() for _ in range(self.n_buckets)]
         self.object_bucket = dict()
 
@@ -24,9 +33,9 @@ class GreedyBalancer:
 
         # The values of the following are only valid
         # after a call to balance
-        self._object_load = {}
-        self._bucket_load = np.zeros(self.n_buckets, dtype=np.float64)
-        self._imbalance = 0.0
+        self.object_load = {}
+        self.bucket_load = np.zeros(self.n_buckets, dtype=np.float64)
+        self.imbalance = 0.0
 
         self.new_objects = set()
         self.object_bucket_prev = dict()
@@ -79,27 +88,27 @@ class GreedyBalancer:
             lb = self.object_la[o] / max_lb
             l = (1 - LAMBDA) * la + LAMBDA * lb
 
-            self._object_load[o] = l
+            self.object_load[o] = l
 
         for i in range(self.n_buckets):
-            self._bucket_load.fill(0.0)
+            self.bucket_load.fill(0.0)
             for o in self.bucket_objects[i]:
-                self._bucket_load[i] += self._object_load[o]
+                self.bucket_load[i] += self.object_load[o]
 
     def _update_imbalance(self):
         """Check if there is a load imbalance."""
-        min_load = self._bucket_load.min()
-        max_load = self._bucket_load.max()
-        sum_load = self._bucket_load.sum()
+        min_load = self.bucket_load.min()
+        max_load = self.bucket_load.max()
+        sum_load = self.bucket_load.sum()
 
-        self._imbalance = float((max_load - min_load) / sum_load)
+        self.imbalance = float((max_load - min_load) / sum_load)
 
     def _greedy_move(self,):
         """Greedily select agents to move from max loaded rank to min loaded rank."""
-        src = np.argmax(self._bucket_load)
-        dst = np.argmin(self._bucket_load)
+        src = np.argmax(self.bucket_load)
+        dst = np.argmin(self.bucket_load)
 
-        object_load_h = [(self._object_load[o], o) for o in self.bucket_objects[src]]
+        object_load_h = [(self.object_load[o], o) for o in self.bucket_objects[src]]
         heapq.heapify(object_load_h)
 
         moved = False
@@ -109,13 +118,13 @@ class GreedyBalancer:
             # If movement will still leave the src bucket
             # more or equally loaded than dst bucket,
             # then move the object
-            if self._bucket_load[src] - l >= self._bucket_load[dst] + l:
+            if self.bucket_load[src] - l >= self.bucket_load[dst] + l:
                 moved = True
                 if o not in self.object_bucket_prev:
                     self.object_bucket_prev[o] = src
 
-                self._bucket_load[src] -= l
-                self._bucket_load[dst] += l
+                self.bucket_load[src] -= l
+                self.bucket_load[dst] += l
                 self.bucket_objects[src].remove(o)
                 self.bucket_objects[dst].add(o)
                 self.object_bucket[o] = dst
@@ -130,7 +139,7 @@ class GreedyBalancer:
 
         while True:
             self._update_imbalance()
-            if self._imbalance < IMBALANCE_TOL:
+            if self.imbalance < IMBALANCE_TOL:
                 break
 
             moved = self._greedy_move()
@@ -142,3 +151,40 @@ class GreedyBalancer:
                 del self.object_bucket_prev[o]
             elif self.object_bucket_prev[o] == self.object_bucket[o]:
                 del self.object_bucket_prev[o]
+
+    def get_new_objects(self):
+        """Return the bucket of the new objects.
+
+        Returns
+        -------
+            List of two tuples [(o, b])
+                o: string/int
+                    ID of the object
+                b: int  
+                    The bucket of the object
+        """
+        ret = []
+        for o in self.new_objects:
+            b = self.object_bucket[o]
+            ret.append((o, b))
+        return ret
+
+    def get_moving_objects(self):
+        """Return the moving objects and their source and dstination buckets.
+
+        Returns
+        -------
+            List of two tuples [(o, srcb, dstb])
+                o: string/int
+                    ID of the object
+                srcb: int  
+                    The source bucket of the object
+                dstb: int
+                    The destination bucket of the object
+        """
+        ret = []
+        for o in self.object_bucket_prev:
+            srcb = self.object_bucket_prev[o]
+            dstb = self.object_bucket[o]
+            ret.append((o, srcb, dstb))
+        return ret

@@ -1,9 +1,17 @@
-"""Agent interface."""
+"""Agent interface.
+
+The agent models a single agent in the simulation.
+
+NOTE: Agents in the Matrix are not actors themselves.
+They are contained in a agent runner actor.
+The agent runner actor calls the `step', `is_alive' and `memory_usage'
+methods of the agent.
+"""
 
 from abc import ABC, abstractmethod
 
 class Agent(ABC):
-    """Agent type interface."""
+    """Agent interface."""
 
     @abstractmethod
     def step(self, timestep):
@@ -12,11 +20,11 @@ class Agent(ABC):
         Parameters
         ----------
             timestep: Timestep
-                The current timestep.
+                The current timestep
 
         Returns
         -------
-            List of store updates
+            An iterable of StateUpdate objects
         """
 
     @abstractmethod

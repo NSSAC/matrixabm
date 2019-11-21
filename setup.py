@@ -2,8 +2,8 @@
 
 from setuptools import setup
 
-package_name = "matrix2"
-description = "The Matrix v2: An Agent Based Modeling Framework"
+package_name = "matrixabm"
+description = "The Matrix ABM: An Agent Based Modeling Framework"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -27,16 +27,15 @@ setup(
         "click",
         "click_completion",
         "logbook",
-        "more-itertools",
-        "python-dateutil",
         "xactor",
-        "tensorboardx"
+        "numpy",
+        "tensorboard",
+        "tensorboardx",
     ],
 
-    url="http://github.com/nssac/matrix2",
+    url="http://github.com/nssac/matrixabm",
     classifiers=(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        # "Operating System :: OS Independent",
     ),
 )
