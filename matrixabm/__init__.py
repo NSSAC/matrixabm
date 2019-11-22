@@ -1,6 +1,10 @@
 """The Matrix ABM."""
 
+import logging
+
 SUMMARY_DIR_ENVVAR = "MATRIXABM_SUMMARY_DIR"
+
+INFO_FINE = logging.INFO - 1
 
 import xactor.mpi_actor as asys
 

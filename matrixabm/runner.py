@@ -11,6 +11,7 @@ from time import time
 
 import xactor.mpi_actor as asys
 
+from . import INFO_FINE
 from .standard_actors import RUNNERS, EVERY_RUNNER, COORDINATOR
 
 LOG = asys.getLogger(__name__)
@@ -58,7 +59,7 @@ class Runner:
 
     def _prepare_for_next_step(self):
         """Reset the variables."""
-        LOG.info("Preparing for next step")
+        LOG.log(INFO_FINE, "Preparing for next step")
 
         self.timestep = None
         self.flag_create_agent_done = False
@@ -67,7 +68,8 @@ class Runner:
 
     def _try_start_step(self):
         """Step through the local agents to produce updates."""
-        LOG.info(
+        LOG.log(
+            INFO_FINE,
             "Can start step? (TS=%s,CAD=%s,MAD=%s,NRAD=%d/%d)",
             bool(self.timestep),
             self.flag_create_agent_done,

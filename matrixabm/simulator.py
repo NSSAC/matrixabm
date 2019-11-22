@@ -11,6 +11,7 @@ from time import time
 
 import xactor.mpi_actor as asys
 
+from . import INFO_FINE
 from .summary_writer import get_summary_writer
 from .standard_actors import AID_POPULATION, AID_COORDINATOR, AID_RUNNER
 from .standard_actors import POPULATION, COORDINATOR, EVERY_RUNNER
@@ -81,8 +82,11 @@ class Simulator(ABC):
             ]
             nsfd_str = ["%s=%d/%d" % tup for tup in nsfd_str]
             nsfd_str = ",".join(nsfd_str)
-            LOG.info(
-                "Can start step? (FCD=%s,%s)", self.flag_coordinator_done, nsfd_str
+            LOG.log(
+                INFO_FINE,
+                "Can start step? (FCD=%s,%s)",
+                self.flag_coordinator_done,
+                nsfd_str,
             )
             if not self.flag_coordinator_done:
                 return

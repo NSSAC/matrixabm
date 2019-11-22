@@ -11,6 +11,7 @@ import numpy as np
 
 import xactor.mpi_actor as asys
 
+from . import INFO_FINE
 from .summary_writer import get_summary_writer
 from .standard_actors import RUNNERS, EVERY_RUNNER, MAIN
 
@@ -67,7 +68,7 @@ class Coordinator:
 
     def _prepare_for_next_step(self):
         """Prepare for next step."""
-        LOG.info("Preparing for next step")
+        LOG.log(INFO_FINE, "Preparing for next step")
 
         self.timestep = None
         self.agent_constructor = {}
@@ -138,7 +139,8 @@ class Coordinator:
 
     def _try_load_balance(self):
         """Try to start the load balancing step."""
-        LOG.info(
+        LOG.log(
+            INFO_FINE,
             "Can balance load? (TS=%s,CAD=%s)",
             bool(self.timestep),
             self.flag_create_agent_done,
@@ -163,7 +165,8 @@ class Coordinator:
 
     def _try_finish_step(self):
         """Try to finish the step."""
-        LOG.info(
+        LOG.log(
+            INFO_FINE,
             "Can finish step? (TS=%s,CAD=%s,NASPD=%d/%d)",
             bool(self.timestep),
             self.flag_create_agent_done,

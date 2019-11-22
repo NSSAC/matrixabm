@@ -9,6 +9,8 @@ import sqlite3
 
 import xactor.mpi_actor as asys
 
+from . import INFO_FINE
+
 # Shared sqlite3 connection
 _SQLITE3_CONNECTION = None
 
@@ -54,7 +56,7 @@ class SQLite3Connector:
 
         con = sqlite3.connect(":memory:")
         for store_name, dsn in zip(self.store_names, self.dsns):
-            LOG.info("Attaching '%s' to %s", dsn, store_name)
+            LOG.log(INFO_FINE, "Attaching '%s' to %s", dsn, store_name)
             sql = f"attach database ? as {store_name}"
             con.execute(sql, (dsn,))
 
@@ -71,6 +73,6 @@ class SQLite3Connector:
         if _SQLITE3_CONNECTION is None:
             return
 
-        LOG.info("Closing")
+        LOG.log(INFO_FINE, "Closing")
         _SQLITE3_CONNECTION.close()
         _SQLITE3_CONNECTION = None

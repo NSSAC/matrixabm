@@ -29,6 +29,7 @@ from abc import ABC, abstractmethod
 
 import xactor.mpi_actor as asys
 
+from . import INFO_FINE
 from .standard_actors import MAIN
 
 
@@ -87,8 +88,11 @@ class StateStore(ABC):
 
     def _try_flush(self):
         """Apply the cached updates to the state store."""
-        self.log.info(
-            "Can flush? (NHUD=%d/%d)", self.num_handle_update_done, asys.WORLD_SIZE
+        self.log.log(
+            INFO_FINE,
+            "Can flush? (NHUD=%d/%d)",
+            self.num_handle_update_done,
+            asys.WORLD_SIZE,
         )
         if self.num_handle_update_done < asys.WORLD_SIZE:
             return

@@ -158,5 +158,5 @@ def main(store_path):
     asys.start(AID_MAIN, BluePillSimulator, store_path)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     main() #pylint: disable=no-value-for-parameter

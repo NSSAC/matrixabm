@@ -1,5 +1,6 @@
 """A SQLite3 database file backed state store."""
 
+from . import INFO_FINE
 from .sqlite3_connector import SQLite3Connector
 from .state_store import StateStore
 
@@ -25,10 +26,10 @@ class SQLite3Store(StateStore):
 
     def flush(self):
         """Apply the updates."""
-        self.log.info("Sorting %d updates", len(self.update_cache))
+        self.log.log(INFO_FINE, "Sorting %d updates", len(self.update_cache))
         self.update_cache.sort()
 
-        self.log.info("Applying %d updates", len(self.update_cache))
+        self.log.log(INFO_FINE, "Applying %d updates", len(self.update_cache))
         con = SQLite3Connector.connection()
         with con:
             for update in self.update_cache:
@@ -49,4 +50,3 @@ class SQLite3Store(StateStore):
             con.execute(sql)
         else:
             con.execute(sql, params)
-
