@@ -6,7 +6,7 @@ SUMMARY_DIR_ENVVAR = "MATRIXABM_SUMMARY_DIR"
 
 INFO_FINE = logging.INFO - 1
 
-import xactor.mpi_actor as asys
+import xactor as asys
 
 from .standard_actors import AID_MAIN
 from .datatypes import Timestep, Constructor, StateUpdate

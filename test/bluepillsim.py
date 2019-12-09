@@ -14,6 +14,7 @@ from matrixabm import RandomLoadBalancer
 from matrixabm import SQLite3Store, SQLite3Connector
 
 STORE_NAME = "bluepill"
+WORLD_SIZE = len(asys.ranks())
 
 
 class BluePillStore(SQLite3Store):
@@ -84,7 +85,12 @@ class BluePillAgent(Agent):
 
         # Make the update
         update = StateUpdate(
-            self.store_name, order_key, "set_state", self.agent_id, self.state, timestep.step
+            self.store_name,
+            order_key,
+            "set_state",
+            self.agent_id,
+            self.state,
+            timestep.step,
         )
 
         return [update]
@@ -141,15 +147,18 @@ class BluePillSimulator(Simulator):
 
     def LoadBalancer(self):
         """Get the load balancer constructor."""
-        return Constructor(RandomLoadBalancer, asys.WORLD_SIZE)
+        return Constructor(RandomLoadBalancer, WORLD_SIZE)
 
     def main(self):
         """Setup the connectors on the ranks."""
         for rank in asys.ranks():
-            asys.create_actor(rank, "connector", SQLite3Connector, [STORE_NAME], [self.store_path])
+            asys.create_actor(
+                rank, "connector", SQLite3Connector, [STORE_NAME], [self.store_path]
+            )
         asys.ActorProxy(asys.EVERY_RANK, "connector").connect(send_immediate=True)
 
         super().main()
+
 
 @click.command()
 @click.argument("store_path")
@@ -157,6 +166,7 @@ def main(store_path):
     """Run the simulation."""
     asys.start(AID_MAIN, BluePillSimulator, store_path)
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    main() #pylint: disable=no-value-for-parameter
+    main()  # pylint: disable=no-value-for-parameter

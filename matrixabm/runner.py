@@ -9,12 +9,13 @@ There is one runner actor per process/rank.
 
 from time import time
 
-import xactor.mpi_actor as asys
+import xactor as asys
 
 from . import INFO_FINE
 from .standard_actors import RUNNERS, EVERY_RUNNER, COORDINATOR
 
 LOG = asys.getLogger(__name__)
+WORLD_SIZE = len(asys.ranks())
 
 
 class Runner:
@@ -75,7 +76,7 @@ class Runner:
             self.flag_create_agent_done,
             self.flag_move_agents_done,
             self.num_receive_agent_done,
-            asys.WORLD_SIZE,
+            WORLD_SIZE,
         )
         if self.timestep is None:
             return
@@ -83,7 +84,7 @@ class Runner:
             return
         if not self.flag_move_agents_done:
             return
-        if self.num_receive_agent_done < asys.WORLD_SIZE:
+        if self.num_receive_agent_done < WORLD_SIZE:
             return
 
         dead_agents = []
@@ -108,7 +109,7 @@ class Runner:
 
             # Inform the coordinator
             COORDINATOR.agent_step_profile(
-                asys.WORLD_RANK,
+                asys.current_rank(),
                 agent_id=agent_id,
                 step_time=(end_time - start_time),
                 memory_usage=memory_usage,
@@ -118,10 +119,10 @@ class Runner:
 
         # Tell stores that we are done for this step
         for store in self.store_proxies.values():
-            store.handle_update_done(asys.WORLD_RANK)
+            store.handle_update_done(asys.current_rank())
 
         # Tell the coordinator we are done
-        COORDINATOR.agent_step_profile_done(asys.WORLD_RANK)
+        COORDINATOR.agent_step_profile_done(asys.current_rank())
 
         # Flush out any pending messages
         asys.flush()
@@ -217,7 +218,7 @@ class Runner:
         assert not self.flag_move_agents_done
         self.flag_move_agents_done = True
 
-        EVERY_RUNNER.receive_agent_done(asys.WORLD_RANK, send_immediate=True)
+        EVERY_RUNNER.receive_agent_done(asys.current_rank(), send_immediate=True)
         self._try_start_step()
 
     def receive_agent(self, agent_id, agent):
@@ -254,7 +255,7 @@ class Runner:
             rank: int
                 Rank of the agent runner
         """
-        assert self.num_receive_agent_done < asys.WORLD_SIZE
+        assert self.num_receive_agent_done < WORLD_SIZE
         if __debug__:
             LOG.debug("Runner on %d has finished sending agents", rank)
 

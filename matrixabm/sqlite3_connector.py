@@ -7,7 +7,7 @@ There should be SQLite3 connector actor on every rank.
 
 import sqlite3
 
-import xactor.mpi_actor as asys
+import xactor as asys
 
 from . import INFO_FINE
 

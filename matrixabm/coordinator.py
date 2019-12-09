@@ -9,13 +9,14 @@ There is a single coordinator actor in every simulation.
 from time import time
 import numpy as np
 
-import xactor.mpi_actor as asys
+import xactor as asys
 
 from . import INFO_FINE
 from .summary_writer import get_summary_writer
 from .standard_actors import RUNNERS, EVERY_RUNNER, MAIN
 
 LOG = asys.getLogger(__name__)
+WORLD_SIZE = len(asys.ranks())
 
 
 class Coordinator:
@@ -77,9 +78,9 @@ class Coordinator:
         self.flag_create_agent_done = False
         self.num_agent_step_profile_done = 0
 
-        self.rank_step_time = [0.0] * asys.WORLD_SIZE
-        self.rank_memory_usage = [0.0] * asys.WORLD_SIZE
-        self.rank_n_updates = [0] * asys.WORLD_SIZE
+        self.rank_step_time = [0.0] * WORLD_SIZE
+        self.rank_memory_usage = [0.0] * WORLD_SIZE
+        self.rank_n_updates = [0] * WORLD_SIZE
 
         self.agent_step_time = {}
         self.agent_memory_usage = {}
@@ -105,7 +106,7 @@ class Coordinator:
             self.timestep.step,
         )
 
-        for rank in range(asys.WORLD_SIZE):
+        for rank in range(WORLD_SIZE):
             summary_writer.add_scalar(
                 f"rank_step_time/{rank}", self.rank_step_time[rank], self.timestep.step
             )
@@ -171,13 +172,13 @@ class Coordinator:
             bool(self.timestep),
             self.flag_create_agent_done,
             self.num_agent_step_profile_done,
-            asys.WORLD_SIZE,
+            WORLD_SIZE,
         )
         if self.timestep is None:
             return
         if not self.create_agent_done:
             return
-        if self.num_agent_step_profile_done < asys.WORLD_SIZE:
+        if self.num_agent_step_profile_done < WORLD_SIZE:
             return
 
         MAIN.coordinator_done(send_immediate=True)
@@ -286,7 +287,7 @@ class Coordinator:
             rank: int
                 Rank of the agent runner
         """
-        assert self.num_agent_step_profile_done < asys.WORLD_SIZE
+        assert self.num_agent_step_profile_done < WORLD_SIZE
         if __debug__:
             LOG.debug("Runner on %d is done", rank)
 

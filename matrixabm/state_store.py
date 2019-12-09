@@ -27,10 +27,12 @@ to the underlying state store object.
 from time import time
 from abc import ABC, abstractmethod
 
-import xactor.mpi_actor as asys
+import xactor as asys
 
 from . import INFO_FINE
 from .standard_actors import MAIN
+
+WORLD_SIZE = len(asys.ranks())
 
 
 class StateStore(ABC):
@@ -79,7 +81,7 @@ class StateStore(ABC):
             rank: int
                 Rank of the runner
         """
-        assert self.num_handle_update_done < asys.WORLD_SIZE
+        assert self.num_handle_update_done < WORLD_SIZE
         if __debug__:
             self.log.debug("Agent runner on %d is done", rank)
 
@@ -92,9 +94,9 @@ class StateStore(ABC):
             INFO_FINE,
             "Can flush? (NHUD=%d/%d)",
             self.num_handle_update_done,
-            asys.WORLD_SIZE,
+            WORLD_SIZE,
         )
-        if self.num_handle_update_done < asys.WORLD_SIZE:
+        if self.num_handle_update_done < WORLD_SIZE:
             return
 
         start_time = time()
@@ -102,7 +104,7 @@ class StateStore(ABC):
         flush_time = time() - start_time
 
         MAIN.store_flush_done(
-            self.store_name, asys.WORLD_RANK, flush_time, send_immediate=True
+            self.store_name, asys.current_rank(), flush_time, send_immediate=True
         )
 
         self.num_handle_update_done = 0

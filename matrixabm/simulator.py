@@ -9,7 +9,7 @@ Users are supposed to ceate a
 from abc import ABC, abstractmethod
 from time import time
 
-import xactor.mpi_actor as asys
+import xactor as asys
 
 from . import INFO_FINE
 from .summary_writer import get_summary_writer
@@ -19,6 +19,7 @@ from .coordinator import Coordinator
 from .runner import Runner
 
 LOG = asys.getLogger(__name__)
+WORLD_SIZE = len(asys.ranks())
 
 
 class Simulator(ABC):
@@ -155,7 +156,7 @@ class Simulator(ABC):
             self.stores.append(store_name)
 
         # Create the runners
-        for rank in range(asys.WORLD_SIZE):
+        for rank in asys.ranks():
             asys.create_actor(rank, AID_RUNNER, Runner, store_proxies)
 
         self._try_start_step(starting=True)
