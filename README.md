@@ -1,4 +1,4 @@
-# Matrix 2.0: An Agent Based Modeling Framework
+# The Matrix ABM: An Agent Based Modeling Framework
 ```
                                       .              __.....__
        _---~~(~~-_.                 .'|          .-''         '.
