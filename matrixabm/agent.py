@@ -4,7 +4,7 @@ The agent models a single agent in the simulation.
 
 NOTE: Agents in the Matrix are not actors themselves.
 They are contained in a agent runner actor.
-The agent runner actor calls the `step', `is_alive' and `memory_usage'
+The agent runner actor calls the `step`, `is_alive` and `memory_usage`
 methods of the agent.
 """
 
@@ -19,12 +19,13 @@ class Agent(ABC):
 
         Parameters
         ----------
-            timestep: Timestep
-                The current timestep
+        timestep: Timestep
+            The current timestep
 
         Returns
         -------
-            An iterable of StateUpdate objects
+            updates: iterable
+                An iterable of StateUpdate objects
         """
 
     @abstractmethod

@@ -23,20 +23,20 @@ class Runner:
 
     Receives
     --------
-        step from main
-        create_agent* from coordinator
-        create_agent_done from coordinator
-        move_agent* from coordinator
-        move_agent_done from coordinator
-        receive_agent* from runner(rank)
-        receive_agent_done from runner(rank)
+    * step from Simulator
+    * create_agent* from Coordinator
+    * create_agent_done from Coordinator
+    * move_agent* from Coordinator
+    * move_agent_done from Coordinator
+    * receive_agent* from Runner(s)
+    * receive_agent_done from Runner(s)
 
     Sends
     -----
-        handle_update* to stores
-        handle_update_done to stores
-        agent_step_profile to coordinator
-        agent_step_profile_done to coordinator
+    * handle_update* to StateStore(s)
+    * handle_update_done to StateStore(s)
+    * agent_step_profile to Coordinator
+    * agent_step_profile_done to Coordinator
     """
 
     def __init__(self, store_proxies):
@@ -44,8 +44,8 @@ class Runner:
 
         Parameters
         ----------
-            store_proxies: dict [store_name -> actor proxy object]
-                Actor proxy objects to stores
+        store_proxies: dict [store_name -> actor proxy object]
+            Actor proxy objects to stores
         """
         self.local_agents = {}
         self.store_proxies = store_proxies
@@ -138,11 +138,12 @@ class Runner:
 
         Sender
         -----
-            the main actor
+        Simulator
 
         Parameters
         ----------
-            timestep: The current (to start) timestep
+        timestep: Timestep
+            The current (to start) timestep
         """
         assert self.timestep is None
 
@@ -154,14 +155,14 @@ class Runner:
 
         Sender
         ------
-            coordinator
+        Coordinator
 
         Parameters
         ----------
-            agent_id: str
-                ID of the to be created agent
-            constructor: Constructor
-                Constructor to create the agent
+        agent_id: str
+            ID of the to be created agent
+        constructor: Constructor
+            Constructor to create the agent
         """
         if __debug__:
             if agent_id in self.local_agents:
@@ -176,7 +177,7 @@ class Runner:
 
         Sender
         ------
-            coordinator
+        Coordinator
         """
         assert not self.flag_create_agent_done
 
@@ -188,14 +189,14 @@ class Runner:
 
         Sender
         ------
-            coordinator
+        Coordinator
 
         Parameters
         ----------
-            agent_id: str
-                ID of the agent to be moved
-            dst_rank: int
-                Destination rank of the agent
+        agent_id: str
+            ID of the agent to be moved
+        dst_rank: int
+            Destination rank of the agent
         """
         if __debug__:
             if agent_id not in self.local_agents:
@@ -213,7 +214,7 @@ class Runner:
 
         Sender
         ------
-            coordinator
+        Coordinator
         """
         assert not self.flag_move_agents_done
         self.flag_move_agents_done = True
@@ -226,14 +227,14 @@ class Runner:
 
         Sender
         ------
-            runner on a different rank
+        Runner
 
         Parameters
         ----------
-            agent_id: str
-                ID of the incoming agent
-            agent: agent
-                The acutal agent itself
+        agent_id: str
+            ID of the incoming agent
+        agent: Agent
+            The acutal agent itself
         """
         if __debug__:
             if agent_id in self.local_agents:
@@ -248,12 +249,12 @@ class Runner:
 
         Sender
         ------
-            runner on a different rank
+        Runner
 
         Parameters
         ----------
-            rank: int
-                Rank of the agent runner
+        rank: int
+            Rank of the agent runner
         """
         assert self.num_receive_agent_done < WORLD_SIZE
         if __debug__:

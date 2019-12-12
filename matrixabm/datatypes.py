@@ -11,12 +11,12 @@ class Timestep:
 
     Attributes
     ----------
-        step: float
-            Logical time of the timestep
-        start: float
-            Real start time of the timestep (inclusive)
-        end: float
-            Real end time of the timestep (exclusive)
+    step: float
+        Logical time of the timestep
+    start: float
+        Real start time of the timestep (inclusive)
+    end: float
+        Real end time of the timestep (exclusive)
     """
 
     step: float
@@ -29,12 +29,12 @@ class Constructor:
 
     Attributes
     ----------
-        cls: type
-            The class to be used for creating the object
-        args: list
-            The positional arguments of the constructor
-        kwargs: dict
-            The keyword arguements of the constructor
+    cls: type
+        The class to be used for creating the object
+    args: list
+        The positional arguments of the constructor
+    kwargs: dict
+        The keyword arguements of the constructor
     """
 
     cls: type
@@ -46,12 +46,12 @@ class Constructor:
 
         Parameters
         ----------
-            cls: type
-                The class to be used for creating the object
-            *args: list
-                Positional arguments of the consturctor
-            **kwargs: dict
-                Keyword arguments of the consturctor
+        cls: type
+            The class to be used for creating the object
+        *args: list
+            Positional arguments of the consturctor
+        **kwargs: dict
+            Keyword arguments of the consturctor
         """
         self.cls = cls
         self.args = args
@@ -62,7 +62,7 @@ class Constructor:
 
         Returns
         -------
-            The constructed object
+        the constructed object
         """
         return self.cls(*self.args, **self.kwargs)
 
@@ -72,16 +72,16 @@ class StateUpdate:
 
     Attributes
     ----------
-        store_name: str
-            Name of the state store to which this update is to be applied
-        order_key: str
-            Key used to sort the updates before application
-        method: str
-            Method name on the state store that is used to apply this update
-        args: list
-            Positional arguments for the above method
-        kwargs: dict
-            Keyword arguments for the above method
+    store_name: str
+        Name of the state store to which this update is to be applied
+    order_key: str
+        Key used to sort the updates before application
+    method: str
+        Method name on the state store that is used to apply this update
+    args: list
+        Positional arguments for the above method
+    kwargs: dict
+        Keyword arguments for the above method
     """
 
     store_name: str
@@ -96,16 +96,16 @@ class StateUpdate:
 
         Parameters
         ----------
-            store_name: str
-                Name of the state store to which this update is to be applied
-            order_key: str
-                Key used to sort the updates before application
-            method: str
-                Method name on the state store that is used to apply this update
-            args: list
-                Positional arguments for the above method
-            kwargs: dict
-                Keyword arguments for the above method
+        store_name: str
+            Name of the state store to which this update is to be applied
+        order_key: str
+            Key used to sort the updates before application
+        method: str
+            Method name on the state store that is used to apply this update
+        *args: list
+            Positional arguments for the above method
+        **kwargs: dict
+            Keyword arguments for the above method
         """
         self.store_name = store_name
         self.order_key = order_key
@@ -118,8 +118,8 @@ class StateUpdate:
 
         Parameters
         ----------
-            store: object
-                The state store object
+        store: object
+            The state store object
         """
         method = getattr(store, self.method)
         method(*self.args, **self.kwargs)

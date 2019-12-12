@@ -1,8 +1,8 @@
 """A range timestep generator.
 
-The RangeTimestepGenerator produces a given number of timesteps.
+The `RangeTimestepGenerator` produces a given number of timesteps.
 The realtime period represented by each timestep
-genearted by RangeTimestepGenerator is one seconds.
+genearted by `RangeTimestepGenerator` is one second.
 """
 
 from .datatypes import Timestep
@@ -17,8 +17,8 @@ class RangeTimestepGenerator(TimestepGenerator):
 
         Parameters
         ----------
-            nsteps: int
-                Number of timesteps to generate
+        nsteps: int
+            Number of timesteps to generate
         """
         self.nsteps = int(nsteps)
         self.step = 0
@@ -28,8 +28,8 @@ class RangeTimestepGenerator(TimestepGenerator):
 
         Returns
         -------
-            timestep: Timestep or None
-                The current timestep
+        timestep: Timestep, optional
+            The current timestep
         """
         if self.step == self.nsteps:
             return None

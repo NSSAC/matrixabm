@@ -24,19 +24,19 @@ class Coordinator:
 
     Receives
     --------
-        step from main
-        create_agent* from population
-        create_agent_done from population
-        agent_step_profile* from runner(rank)
-        agent_step_profile_done from runner(rank)
+    * step from Simulator
+    * create_agent* from Population
+    * create_agent_done from Population
+    * agent_step_profile* from Runner
+    * agent_step_profile_done from Runner
 
     Sends
     -----
-        create_agent* to runner(rank)
-        create_agent_done to runner(rank)
-        move_agent* to runner(rank)
-        move_agent_done to runner(rank)
-        coordinator_done to main
+    * create_agent* to Runner
+    * create_agent_done to Runner
+    * move_agent* to Runner
+    * move_agent_done to Runner
+    * coordinator_done to Simulator
     """
 
     def __init__(self, balancer):
@@ -44,8 +44,8 @@ class Coordinator:
 
         Parameters
         ----------
-            balancer: LoadBalancer
-                The agent load balancer
+        balancer: LoadBalancer
+            The agent load balancer
         """
         self.balancer = balancer
 
@@ -206,18 +206,18 @@ class Coordinator:
 
         Sender
         ------
-            population
+        Population
 
         Parameters
         ----------
-            agent_id: str
-                ID of the to be created agent
-            constructor: Constructor
-                Constructor of the agent
-            step_time: float
-                Initial estimate step_time per unit simulated real time (in seconds)
-            memory_usage: float
-                Initial estimate of memory usage (in bytes)
+        agent_id: str
+            ID of the to be created agent
+        constructor: Constructor
+            Constructor of the agent
+        step_time: float
+            Initial estimate step_time per unit simulated real time (in seconds)
+        memory_usage: float
+            Initial estimate of memory usage (in bytes)
         """
         self.agent_constructor[agent_id] = constructor
         self.balancer.add_object(agent_id, memory_usage, step_time)
@@ -242,22 +242,22 @@ class Coordinator:
 
         Sender
         ------
-            runner(rank)
+        Runner
 
         Parameters
         ----------
-            rank: int
-                Rank of the agent runner
-            agent_id: str
-                ID of the dead agent
-            step_time: float
-                Time taken by the agent to execute current timestep (in seconds)
-            memory_usage: float
-                Memory usage of the agent (in bytes)
-            n_updates: int
-                Number of updates produced by the agent
-            is_alive: bool
-                True if agent will generate events in the future
+        rank: int
+            Rank of the agent runner
+        agent_id: str
+            ID of the dead agent
+        step_time: float
+            Time taken by the agent to execute current timestep (in seconds)
+        memory_usage: float
+            Memory usage of the agent (in bytes)
+        n_updates: int
+            Number of updates produced by the agent
+        is_alive: bool
+            True if agent will generate events in the future
         """
         self.rank_step_time[rank] += step_time
         self.rank_memory_usage[rank] += memory_usage
@@ -280,12 +280,12 @@ class Coordinator:
 
         Sender
         ------
-            runner(rank)
+        Runner
 
         Parameters
         ----------
-            rank: int
-                Rank of the agent runner
+        rank: int
+            Rank of the agent runner
         """
         assert self.num_agent_step_profile_done < WORLD_SIZE
         if __debug__:

@@ -1,24 +1,24 @@
 """State store interface.
 
 The shared state of a Matrix simulation is store in state store objects.
-A Matrix simulation can have one or mode state store objects.
+A Matrix simulation can have one or more state store objects.
 Every state store object has a unique name.
-Every state store object is replicate on every compute node
+Every state store object is replicated on every compute node
 running the simulation.
 A state store actor manages a state store object.
 Thus there is a state store actor on every compute node
 for every state store object.
 
-A state store actor receives `handle_update' messages
+A state store actor receives `handle_update` messages
 from the agent runner actors.
-On receiving an update via a `handle_update' message
+On receiving an update via a `handle_update` message
 the state store actor is supposed to "cache" the update.
 Once an agent runner actor is finished
 for the current timestep,
-it sends the state store the `handle_update_done' message.
-Once the store receives all `handle_update_done' messages,
+it sends the state store the `handle_update_done` message.
+Once the store receives all `handle_update_done` messages,
 from all the agent runner actors
-it executes its flush method.
+it executes its `flush` method.
 During the flush,
 all the cached updates are to be "applied"
 to the underlying state store object.
@@ -40,12 +40,12 @@ class StateStore(ABC):
 
     Receives
     --------
-        handle_update* from runner(rank)
-        handle_update_done from runner(rank)
+    * handle_update* from Runner
+    * handle_update_done from Runner
 
     Sends
     -----
-        store_flush_done to main
+    * store_flush_done to Simulator
     """
 
     def __init__(self, store_name):
@@ -61,25 +61,26 @@ class StateStore(ABC):
 
         Sender
         ------
-            runner(rank)
+        Runner
+
 
         Parameters
         ----------
-            update: StateUpdate
-                A state update
+        update: StateUpdate
+            A state update
         """
 
     def handle_update_done(self, rank):
-        """Respond to `handle_update_done' message from a agent runner.
+        """Respond to `handle_update_done` message from a agent runner.
 
         Sender
         ------
-            runner(rank)
+        Runner
 
         Parameters
         ----------
-            rank: int
-                Rank of the runner
+        rank: int
+            Rank of the runner
         """
         assert self.num_handle_update_done < WORLD_SIZE
         if __debug__:

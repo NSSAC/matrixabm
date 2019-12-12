@@ -3,13 +3,13 @@
 The agent population models births of agents.
 There is a single population actor in every simulation.
 At the beginning of every timestep
-the main actor sends it the `create_agents' message
+the main actor sends it the `create_agents` message
 On receiving the above message the population actor
-is supposed send a number of `create_agent' messages
+is supposed send a number of `create_agent` messages
 to the coordinator actor,
 one for every agent created.
-Once all the `create_agent' messages are sent,
-the population actor sends the `create_agent_done' message
+Once all the `create_agent` messages are sent,
+the population actor sends the `create_agent_done` message
 to the coordinator actor.
 """
 
@@ -22,12 +22,12 @@ class Population(ABC):
 
     Receives
     --------
-        create_agents from main
+    * create_agents from Simulator
 
     Sends
     -----
-        create_agent* to coordinator
-        create_agent_done to coordinator
+    * create_agent* to Coordinator
+    * create_agent_done to Coordinator
     """
 
     def create_agents(self, timestep):
@@ -35,12 +35,12 @@ class Population(ABC):
 
         Sender
         ------
-            The main actor
+        Simulator
 
         Parameters
         ----------
-            timestep: Timestep
-                The current (to start) timestep
+        timestep: Timestep
+            The current (to start) timestep
         """
         for agent_id, constructor, step_time, memory_usage in self.do_create_agents(timestep):
             COORDINATOR.create_agent(agent_id, constructor, step_time, memory_usage)
@@ -53,18 +53,18 @@ class Population(ABC):
 
         Parameters
         ----------
-            timestep: Timestep
-                The current (about to start) timestep.
+        timestep: Timestep
+            The current (about to start) timestep.
 
         Returns
         -------
-            An iterable of 4 tuples: [(agent_id, constructor, step_time, memory_usage)]
-                agent_id: str
-                    ID of the to be created agent
-                constructor: Constructor
-                    Constructor of the agent
-                step_time: float
-                    Initial estimate step_time per unit simulated real time (in seconds)
-                memory_usage: float
-                    Initial estimate of memory usage (in bytes)
+        iterable of 4 tuples [(agent_id, constructor, step_time, memory_usage)]
+            agent_id: str
+                ID of the to be created agent
+            constructor: Constructor
+                Constructor of the agent
+            step_time: float
+                Initial estimate step_time per unit simulated real time (in seconds)
+            memory_usage: float
+                Initial estimate of memory usage (in bytes)
         """

@@ -1,6 +1,6 @@
 """Load balancer interface.
 
-The LoadBalancer encapsulates the agent load balancing logic.
+The `LoadBalancer` encapsulates the agent load balancing logic.
 """
 
 from abc import ABC, abstractmethod
@@ -22,12 +22,12 @@ class LoadBalancer(ABC):
 
         Parameters
         ----------
-            o: string/int
-                ID of the object
-            la: float
-                First component of object load (e.g. CPU usage)
-            lb: float
-                Second component of object load (e.g. Memory usage)
+        o: string/int
+            ID of the object
+        la: float
+            First component of object load (e.g. CPU usage)
+        lb: float
+            Second component of object load (e.g. Memory usage)
         """
 
     @abstractmethod
@@ -36,8 +36,8 @@ class LoadBalancer(ABC):
 
         Parameters
         ----------
-            o: string/int
-                ID of the object
+        o: string/int
+            ID of the object
         """
 
     @abstractmethod
@@ -46,12 +46,12 @@ class LoadBalancer(ABC):
 
         Parameters
         ----------
-            o: string/int
-                ID of the object
-            la: float
-                First component of object load (e.g. CPU usage)
-            lb: float
-                Second component of object load (e.g. Memory usage)
+        o: string/int
+            ID of the object
+        la: float
+            First component of object load (e.g. CPU usage)
+        lb: float
+            Second component of object load (e.g. Memory usage)
         """
 
     @abstractmethod
@@ -64,11 +64,11 @@ class LoadBalancer(ABC):
 
         Returns
         -------
-            List of two tuples [(o, b])
-                o: string/int
-                    ID of the object
-                b: int
-                    The bucket of the object
+        list of two tuples [(o, b])
+            o: string/int
+                ID of the object
+            b: int
+                The bucket of the object
         """
 
     @abstractmethod
@@ -77,11 +77,11 @@ class LoadBalancer(ABC):
 
         Returns
         -------
-            List of two tuples [(o, srcb, dstb])
-                o: string/int
-                    ID of the object
-                srcb: int
-                    The source bucket of the object
-                dstb: int
-                    The destination bucket of the object
+        list of three tuples [(o, srcb, dstb])
+            o: string/int
+                ID of the object
+            srcb: int
+                The source bucket of the object
+            dstb: int
+                The destination bucket of the object
         """

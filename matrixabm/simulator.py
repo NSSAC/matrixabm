@@ -2,8 +2,6 @@
 
 The simulator is responsible for coordinating the overall simulation.
 It creates the actors and sends messages to them to start the rounds.
-
-Users are supposed to ceate a
 """
 
 from abc import ABC, abstractmethod
@@ -27,14 +25,14 @@ class Simulator(ABC):
 
     Receives
     --------
-        store_flush_done from stores
-        coordinator_done from coordinator
+    * store_flush_done from StateStore(s)
+    * coordinator_done from Coordinator
 
     Sends
     -----
-        step to coordinator
-        step to runner(rank)
-        create_agents to population
+    * step to Coordinator
+    * step to Runner
+    * create_agents to Population
     """
 
     def __init__(self):
@@ -116,12 +114,7 @@ class Simulator(ABC):
         self._prepare_for_next_step()
 
     def main(self):
-        """Setup the actors.
-
-        Sender
-        ------
-            Actor system
-        """
+        """Start the simulation."""
         # Create the timestep generator
         self.timestep_generator = self.TimestepGenerator().construct()
 
@@ -166,16 +159,16 @@ class Simulator(ABC):
 
         Sender
         ------
-            state stores
+        StateStore(s)
 
         Parameters
         ----------
-            store_name: str
-                Name of the state store
-            rank: int
-                The rank on which the store was running
-            flush_time:
-                Number of seconds taken by the flush operation.
+        store_name: str
+            Name of the state store
+        rank: int
+            The rank on which the store was running
+        flush_time:
+            Number of seconds taken by the flush operation.
         """
         if __debug__:
             LOG.debug("The store %s on rank %d has completed flush", store_name, rank)
@@ -191,7 +184,7 @@ class Simulator(ABC):
 
         Sender
         ------
-            coordinator
+        Coordinator
         """
         if __debug__:
             LOG.debug("The coordinator is done with the current round")
@@ -207,8 +200,8 @@ class Simulator(ABC):
 
         Returns
         -------
-            constructor: Constructor
-                Constructor of the timestep generator class
+        constructor: Constructor
+            Constructor of the timestep generator class
         """
 
     @abstractmethod
@@ -217,8 +210,8 @@ class Simulator(ABC):
 
         Returns
         -------
-            constructor: Constructor
-                Constructor of the population class
+        constructor: Constructor
+            Constructor of the population class
         """
 
     @abstractmethod
@@ -227,11 +220,11 @@ class Simulator(ABC):
 
         Returns
         -------
-            A list of 2 tuples [(store_name, constructor)]
-                store_name: str
-                    Name of the state store
-                constructor: Constructor
-                    Constructor of the state store class
+        List of 2 tuples [(store_name, constructor)]
+            store_name: str
+                Name of the state store
+            constructor: Constructor
+                Constructor of the state store class
         """
 
     @abstractmethod
@@ -240,6 +233,6 @@ class Simulator(ABC):
 
         Returns
         -------
-            constructor: LoadBalancer
-                Return an instance of the load balancer
+        constructor: LoadBalancer
+            Return an instance of the load balancer
         """

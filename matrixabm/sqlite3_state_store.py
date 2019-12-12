@@ -19,8 +19,8 @@ class SQLite3Store(StateStore):
 
         Parameters
         ----------
-            update: StateUpdate
-                A state update
+        update: StateUpdate
+            A state update
         """
         self.update_cache.append(update)
 
@@ -42,8 +42,10 @@ class SQLite3Store(StateStore):
 
         Parameters
         ----------
-            sql: sql statement to execute
-            params: optional parameters of the sql statement.
+        sql: str
+            SQL statement to execute
+        params: tuple, optional
+            Optional parameters of the sql statement.
         """
         con = SQLite3Connector.connection()
         if params is None:
