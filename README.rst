@@ -1,26 +1,20 @@
 The Matrix ABM: An Agent Based Modeling Framework
 =================================================
 
-::
+The Matrix ABM is an agent based modeling framework
+for developing large scale social simulations
+that can run on distrubuted computing platforms.
 
-                                        .              __.....__
-        _---~~(~~-_.                 .'|          .-''         '.
-        _{        )   )            .| <  |         /     .-''"'-.  `.
-    ,   ) -~~- ( ,-' )_        .' |_ | |        /     /________\   \
-    (  `-,_..`., )-- '_,)     .'     || | .'''-. |                  |
-    ( ` _)  (  -~( -_ `,  }   '--.  .-'| |/.'''. \\    .-------------'
-    (_-  _  ~_-~~~~`,  ,' )      |  |  |  /    | | \    '-.____...---.
-    `~ -^(    __;-,((()))      |  |  | |     | |  `.             .'
-            ~~~~ {_ -_(())       |  '.'| |     | |    `''-...... -'
-                    `\  }         |   / | '.    | '. .--.
-    __  __   ___    { }         `'-'  '---'   '---'|__|
-    |  |/  `.'   `.                .|  .-,.--. .--.
-    |   .-.  .-.   '     __      .' |_ |  .-. ||  | ____     _____
-    |  |  |  |  |  |  .:--.'.  .'     || |  | ||  |`.   \  .'    /
-    |  |  |  |  |  | / |   \ |'--.  .-'| |  | ||  |  `.  `'    .'
-    |  |  |  |  |  | `" __ | |   |  |  | |  '- |  |    '.    .'
-    |  |  |  |  |  |  .'.''| |   |  |  | |     |__|    .'     `.
-    |__|  |__|  |__| / /   | |_  |  '.'| |           .'  .'`.   `.
-                    \ \._,\ '/  |   / |_|         .'   /    `.   `.
-                    `--'  `"   `'-'             '----'       '----'
+Full documentation
+------------------
 
+The full documentation is available at ``docs/source/index.rst``
+
+To view the documentation as HTML, compile it as follows::
+
+    $ git clone https://github.com/NSSAC/matrixabm.git
+    $ cd xactor
+    $ pip install --editable .
+    $ pip install -r dev_requirements.txt
+    $ make -C docs
+    $ <BROWSER-COMMAND> docs/build/html/index.html
