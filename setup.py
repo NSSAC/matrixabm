@@ -5,7 +5,7 @@ from setuptools import setup
 package_name = "matrixabm"
 description = "The Matrix ABM: An Agent Based Modeling Framework"
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 setup(
