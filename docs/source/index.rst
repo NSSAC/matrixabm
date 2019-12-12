@@ -20,7 +20,7 @@ Installing Open MPI and mpi4py inside a conda environment
 To create a new virtual environment with conda,
 have Anaconda/Miniconda setup on your system.
 Installation instructions for Anaconda can be found
-`here <https://conda.io/docs/user-guide/install/index.html>`_.
+`here <https://docs.conda.io/projects/conda/en/latest/user-guide/install/>`_.
 After installation of Anaconda/Miniconda
 execute the following commands::
 
