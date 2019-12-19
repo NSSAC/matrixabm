@@ -12,6 +12,8 @@ class SQLite3Store(StateStore):
         """Initialize."""
         super().__init__(store_name)
 
+
+        self._insert_sql_cache = {}
         self.update_cache = []
 
     def handle_update(self, update):
@@ -48,7 +50,32 @@ class SQLite3Store(StateStore):
             Optional parameters of the sql statement.
         """
         con = SQLite3Connector.connection()
-        if params is None:
-            con.execute(sql)
+        try:
+            if params is None:
+                return con.execute(sql)
+            else:
+                return con.execute(sql, params)
+        except Exception:
+            self.log.error("Error executing sql:\n%s\nparams=%r", sql, params)
+            raise
+
+    def insert(self, table, *params):
+        """Execute an insert statement.
+
+        Parameters
+        ----------
+        table: str
+            Table to insert into.
+        values: tuple
+            Values to insert into table.
+        """
+        if table in self._insert_sql_cache:
+            sql = self._insert_sql_cache[table]
         else:
-            con.execute(sql, params)
+            sql = "insert into %s.%s values (%s)"
+            marks = ["?"] * len(params)
+            marks = ",".join(marks)
+            sql = sql % (self.store_name, table, marks)
+            self._insert_sql_cache[table] = sql
+
+        return self.execute(sql, params)
