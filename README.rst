@@ -3,7 +3,7 @@ The Matrix ABM: An Agent Based Modeling Framework
 
 The Matrix ABM is an agent based modeling framework
 for developing large scale social simulations
-that can run on distrubuted computing platforms.
+that can run on distributed computing platforms.
 
 Full documentation
 ------------------
