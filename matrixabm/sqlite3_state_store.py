@@ -12,8 +12,8 @@ class SQLite3Store(StateStore):
         """Initialize."""
         super().__init__(store_name)
 
-
         self._insert_sql_cache = {}
+        self._insert_or_ignore_sql_cache = {}
         self.update_cache = []
 
     def handle_update(self, update):
@@ -73,6 +73,27 @@ class SQLite3Store(StateStore):
             sql = self._insert_sql_cache[table]
         else:
             sql = "insert into %s.%s values (%s)"
+            marks = ["?"] * len(params)
+            marks = ",".join(marks)
+            sql = sql % (self.store_name, table, marks)
+            self._insert_sql_cache[table] = sql
+
+        return self.execute(sql, params)
+
+    def insert_or_ignore(self, table, *params):
+        """Execute an insert or ignore statement.
+
+        Parameters
+        ----------
+        table: str
+            Table to insert into.
+        values: tuple
+            Values to insert into table.
+        """
+        if table in self._insert_or_ignore_sql_cache:
+            sql = self._insert_sql_cache[table]
+        else:
+            sql = "insert or ignore into %s.%s values (%s)"
             marks = ["?"] * len(params)
             marks = ",".join(marks)
             sql = sql % (self.store_name, table, marks)
