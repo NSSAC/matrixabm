@@ -158,11 +158,11 @@ class Coordinator:
         for agent_id, rank in self.balancer.get_new_objects():
             constructor = self.agent_constructor[agent_id]
             RUNNERS[rank].create_agent(agent_id, constructor)
-        EVERY_RUNNER.create_agent_done(send_immediate=True)
+        EVERY_RUNNER.create_agent_done()
 
         for agent_id, src, dst in self.balancer.get_moving_objects():
             RUNNERS[src].move_agent(agent_id, dst)
-        EVERY_RUNNER.move_agent_done(send_immediate=True)
+        EVERY_RUNNER.move_agent_done()
 
     def _try_finish_step(self):
         """Try to finish the step."""
@@ -181,7 +181,7 @@ class Coordinator:
         if self.num_agent_step_profile_done < WORLD_SIZE:
             return
 
-        MAIN.coordinator_done(send_immediate=True)
+        MAIN.coordinator_done()
         self._write_summary()
         self._prepare_for_next_step()
 

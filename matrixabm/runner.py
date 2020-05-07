@@ -219,7 +219,7 @@ class Runner:
         assert not self.flag_move_agents_done
         self.flag_move_agents_done = True
 
-        EVERY_RUNNER.receive_agent_done(asys.current_rank(), send_immediate=True)
+        EVERY_RUNNER.receive_agent_done(asys.current_rank())
         self._try_start_step()
 
     def receive_agent(self, agent_id, agent):

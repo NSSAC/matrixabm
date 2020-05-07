@@ -45,7 +45,7 @@ class Population(ABC):
         for agent_id, constructor, step_time, memory_usage in self.do_create_agents(timestep):
             COORDINATOR.create_agent(agent_id, constructor, step_time, memory_usage)
 
-        COORDINATOR.create_agent_done(send_immediate=True)
+        COORDINATOR.create_agent_done()
 
     @abstractmethod
     def do_create_agents(self, timestep):

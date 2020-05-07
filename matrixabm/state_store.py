@@ -105,7 +105,7 @@ class StateStore(ABC):
         flush_time = time() - start_time
 
         MAIN.store_flush_done(
-            self.store_name, asys.current_rank(), flush_time, send_immediate=True
+            self.store_name, asys.current_rank(), flush_time,
         )
 
         self.num_handle_update_done = 0

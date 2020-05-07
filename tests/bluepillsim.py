@@ -155,7 +155,7 @@ class BluePillSimulator(Simulator):
             asys.create_actor(
                 rank, "connector", SQLite3Connector, [STORE_NAME], [self.store_path]
             )
-        asys.ActorProxy(asys.EVERY_RANK, "connector").connect(send_immediate=True)
+        asys.ActorProxy(asys.EVERY_RANK, "connector").connect()
 
         super().main()
 
