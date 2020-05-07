@@ -28,9 +28,10 @@ setup(
     author_email="pb+pypi@parantapa.net",
 
     long_description=long_description,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
 
     packages=[package_name],
+    package_dir={'': 'src'},
 
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
