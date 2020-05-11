@@ -1,8 +1,7 @@
 """SQLite3 connector.
 
-The SQLite3 connector actor is used to
-setup the processwise sqlite3 connection.
-There should be SQLite3 connector actor on every rank.
+The SQLite3 connector is an actor
+that is used to manage sqlite3 connections.
 """
 
 import sqlite3
@@ -11,19 +10,25 @@ import xactor as asys
 
 from . import INFO_FINE
 
-# Shared sqlite3 connection
-_SQLITE3_CONNECTION = None
-
 LOG = asys.getLogger(__name__)
 
 
 class SQLite3Connector:
     """SQLtie3 connector.
 
+    Attributes
+    ----------
+    store_names : list of str
+        List of database names to use
+    dsns : list of str
+        List of sqlite3 paths corresponding the database names
+    connection : sqlite3.Connection
+        The sqlite3 connection object
+
     Receives
     --------
-        connect from main
-        close from main
+    * connect from Main
+    * close from Main
     """
 
     def __init__(self, store_names, dsns):
@@ -32,26 +37,16 @@ class SQLite3Connector:
 
         self.store_names = store_names
         self.dsns = dsns
-
-    @staticmethod
-    def connection():
-        """Return the shared sqlite3 connection.
-
-        Returns
-        -------
-            Sqlite3 connection object
-        """
-        return _SQLITE3_CONNECTION
+        self.connection = None
 
     def connect(self):
-        """Setup the global sqlite3 connection.
+        """Setup the sqlite3 connection.
 
         Sender
         ------
-            main
+        Main
         """
-        global _SQLITE3_CONNECTION  # pylint: disable=global-statement
-        if _SQLITE3_CONNECTION is not None:
+        if self.connection is not None:
             raise RuntimeError("SQLite3 connection has already been setup.")
 
         con = sqlite3.connect(":memory:")
@@ -60,19 +55,18 @@ class SQLite3Connector:
             sql = f"attach database ? as {store_name}"
             con.execute(sql, (dsn,))
 
-        _SQLITE3_CONNECTION = con
+        self.connection = con
 
     def close(self):
-        """Close the global sqlite3 connection.
+        """Close the sqlite3 connection.
 
         Sender
         ------
-            main
+        Main
         """
-        global _SQLITE3_CONNECTION  # pylint: disable=global-statement
-        if _SQLITE3_CONNECTION is None:
+        if self.connection is None:
             return
 
         LOG.log(INFO_FINE, "Closing")
-        _SQLITE3_CONNECTION.close()
-        _SQLITE3_CONNECTION = None
+        self.connection.close()
+        self.connection = None
