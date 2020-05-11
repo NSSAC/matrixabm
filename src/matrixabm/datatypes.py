@@ -1,4 +1,8 @@
-"""Struct(ured) datatypes."""
+"""Struct(ured) datatypes.
+
+This module defines data container classes
+commonly used in a Matrix simulation.
+"""
 
 from dataclasses import dataclass, field
 
@@ -6,16 +10,17 @@ from dataclasses import dataclass, field
 class Timestep:
     """A simulation timestep.
 
-    Contains both logical time of the timestep,
-    as well as the real time period represented by the timestep.
+    Matrix simulations are discrete time simulations.
+    The Timestep structure is used to represent the logical step (or tick)
+    as well as the real time period represented by by it.
 
     Attributes
     ----------
-    step: float
-        Logical time of the timestep
-    start: float
+    step : float
+        Logical (discrete) time of the timestep
+    start : float
         Real start time of the timestep (inclusive)
-    end: float
+    end : float
         Real end time of the timestep (exclusive)
     """
 
@@ -25,16 +30,16 @@ class Timestep:
 
 @dataclass(init=False)
 class Constructor:
-    """An object constructor.
+    """A delayed object constructor.
 
     Attributes
     ----------
-    cls: type
+    cls : type
         The class to be used for creating the object
-    args: list
+    args : list
         The positional arguments of the constructor
-    kwargs: dict
-        The keyword arguements of the constructor
+    kwargs : dict
+        The keyword arguments of the constructor
     """
 
     cls: type
@@ -42,16 +47,16 @@ class Constructor:
     kwargs: dict
 
     def __init__(self, cls, *args, **kwargs):
-        """Make the consturctor.
+        """Make the constructor.
 
         Parameters
         ----------
-        cls: type
+        cls : type
             The class to be used for creating the object
-        *args: list
-            Positional arguments of the consturctor
-        **kwargs: dict
-            Keyword arguments of the consturctor
+        *args : list
+            Positional arguments of the constructor
+        **kwargs : dict
+            Keyword arguments of the constructor
         """
         self.cls = cls
         self.args = args
@@ -62,25 +67,26 @@ class Constructor:
 
         Returns
         -------
-        the constructed object
+        object
+            The constructed object
         """
         return self.cls(*self.args, **self.kwargs)
 
 @dataclass(init=False, order=True)
 class StateUpdate:
-    """An update message.
+    """A state update message.
 
     Attributes
     ----------
-    store_name: str
+    store_name : str
         Name of the state store to which this update is to be applied
-    order_key: str
+    order_key : str
         Key used to sort the updates before application
-    method: str
+    method : str
         Method name on the state store that is used to apply this update
-    args: list
+    args : list
         Positional arguments for the above method
-    kwargs: dict
+    kwargs : dict
         Keyword arguments for the above method
     """
 
@@ -96,15 +102,15 @@ class StateUpdate:
 
         Parameters
         ----------
-        store_name: str
+        store_name : str
             Name of the state store to which this update is to be applied
-        order_key: str
+        order_key : str
             Key used to sort the updates before application
-        method: str
+        method : str
             Method name on the state store that is used to apply this update
-        *args: list
+        *args : list
             Positional arguments for the above method
-        **kwargs: dict
+        **kwargs : dict
             Keyword arguments for the above method
         """
         self.store_name = store_name
@@ -118,7 +124,7 @@ class StateUpdate:
 
         Parameters
         ----------
-        store: object
+        store : object
             The state store object
         """
         method = getattr(store, self.method)
