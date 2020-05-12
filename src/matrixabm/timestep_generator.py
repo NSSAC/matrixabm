@@ -14,10 +14,6 @@ the Main actor calls the `get_next_timestep` method
 of the timestep generator.
 The method is supposed to return a `Timestep` object or None.
 In case it returns None, the simulation ends.
-
-NOTE: The timestep generator is not an actor.
-It is instantiated as a local attribute object
-of the main actor.
 """
 
 from abc import ABC, abstractmethod
@@ -32,6 +28,6 @@ class TimestepGenerator(ABC):
 
         Returns
         -------
-        timestep: Timestep, optional
+        timestep : Timestep or None
             The current timestep
         """
