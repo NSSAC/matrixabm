@@ -1,6 +1,6 @@
 """State store interface.
 
-The shared state of a Matrix simulation is store in state store objects.
+The shared state of a Matrix simulation is stored in state store objects.
 A Matrix simulation can have one or more state store objects.
 Every state store object has a unique name.
 Every state store object is replicated on every compute node
@@ -66,7 +66,7 @@ class StateStore(ABC):
 
         Parameters
         ----------
-        update: StateUpdate
+        update : StateUpdate
             A state update
         """
 
@@ -79,7 +79,7 @@ class StateStore(ABC):
 
         Parameters
         ----------
-        rank: int
+        rank : int
             Rank of the runner
         """
         assert self.num_handle_update_done < WORLD_SIZE
