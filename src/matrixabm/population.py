@@ -35,15 +35,15 @@ class Population(ABC):
 
         Sender
         ------
-        Simulator
+        * ``Simulator``
 
         Parameters
         ----------
-        timestep: Timestep
+        timestep : Timestep
             The current (to start) timestep
         """
-        for agent_id, constructor, step_time, memory_usage in self.do_create_agents(timestep):
-            COORDINATOR.create_agent(agent_id, constructor, step_time, memory_usage)
+        for args in self.do_create_agents(timestep):
+            COORDINATOR.create_agent(*args, buffer_=True)
 
         COORDINATOR.create_agent_done()
 
@@ -53,18 +53,18 @@ class Population(ABC):
 
         Parameters
         ----------
-        timestep: Timestep
+        timestep : Timestep
             The current (about to start) timestep.
 
         Returns
         -------
         iterable of 4 tuples [(agent_id, constructor, step_time, memory_usage)]
-            agent_id: str
+            agent_id : str
                 ID of the to be created agent
-            constructor: Constructor
+            constructor : Constructor
                 Constructor of the agent
-            step_time: float
+            step_time : float
                 Initial estimate step_time per unit simulated real time (in seconds)
-            memory_usage: float
-                Initial estimate of memory usage (in bytes)
+            memory_usage : float
+                Initial estimate of memory usage
         """
