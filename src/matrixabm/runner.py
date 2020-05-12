@@ -44,7 +44,7 @@ class Runner:
 
         Parameters
         ----------
-        store_proxies: dict [store_name -> actor proxy object]
+        store_proxies : dict [store_name -> actor proxy object]
             Actor proxy objects to stores
         """
         self.local_agents = {}
@@ -142,7 +142,7 @@ class Runner:
 
         Parameters
         ----------
-        timestep: Timestep
+        timestep : Timestep
             The current (to start) timestep
         """
         assert self.timestep is None
@@ -159,9 +159,9 @@ class Runner:
 
         Parameters
         ----------
-        agent_id: str
+        agent_id : str
             ID of the to be created agent
-        constructor: Constructor
+        constructor : Constructor
             Constructor to create the agent
         """
         if __debug__:
@@ -193,9 +193,9 @@ class Runner:
 
         Parameters
         ----------
-        agent_id: str
+        agent_id : str
             ID of the agent to be moved
-        dst_rank: int
+        dst_rank : int
             Destination rank of the agent
         """
         if __debug__:
@@ -231,9 +231,9 @@ class Runner:
 
         Parameters
         ----------
-        agent_id: str
+        agent_id : str
             ID of the incoming agent
-        agent: Agent
+        agent : Agent
             The acutal agent itself
         """
         if __debug__:
@@ -253,7 +253,7 @@ class Runner:
 
         Parameters
         ----------
-        rank: int
+        rank : int
             Rank of the agent runner
         """
         assert self.num_receive_agent_done < WORLD_SIZE
