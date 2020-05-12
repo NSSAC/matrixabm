@@ -3,7 +3,7 @@
 This load balancer completely ignores the load information.
 Every new object is assigned to a random bucket.
 The balance operation is a no op.
-Agents never move from one bucker to another.
+Agents never move from one bucket to another.
 """
 
 import random
@@ -28,17 +28,7 @@ class RandomLoadBalancer(LoadBalancer):
         self.new_objects.clear()
 
     def add_object(self, o, la, lb):
-        """Add a new object.
-
-        Parameters
-        ----------
-            o: string/int
-                ID of the object
-            la: float
-                First component of object load (e.g. CPU usage)
-            lb: float
-                Second component of object load (e.g. Memory usage)
-        """
+        """Add a new object."""
         b = random.randint(0, self.n_buckets - 1)
 
         self.bucket_objects[b].add(o)
@@ -47,45 +37,20 @@ class RandomLoadBalancer(LoadBalancer):
         self.new_objects.add(o)
 
     def delete_object(self, o):
-        """Remove an object.
-
-        Parameters
-        ----------
-            o: string/int
-                ID of the object
-        """
+        """Remove an object."""
         b = self.object_bucket[o]
 
         del self.object_bucket[o]
         self.bucket_objects[b].remove(o)
 
     def update_load(self, o, la, lb):
-        """Set the load of the given objects.
-
-        Parameters
-        ----------
-            o: string/int
-                ID of the object
-            la: float
-                First component of object load (e.g. CPU usage)
-            lb: float
-                Second component of object load (e.g. Memory usage)
-        """
+        """Set the load of the given objects."""
 
     def balance(self):
         """Balance the load distribution in the buckets."""
 
     def get_new_objects(self):
-        """Return the bucket of the new objects.
-
-        Returns
-        -------
-            List of two tuples [(o, b])
-                o: string/int
-                    ID of the object
-                b: int
-                    The bucket of the object
-        """
+        """Return the bucket of the new objects."""
         ret = []
         for o in self.new_objects:
             b = self.object_bucket[o]
@@ -93,16 +58,5 @@ class RandomLoadBalancer(LoadBalancer):
         return ret
 
     def get_moving_objects(self):
-        """Return the moving objects and their source and dstination buckets.
-
-        Returns
-        -------
-            List of two tuples [(o, srcb, dstb])
-                o: string/int
-                    ID of the object
-                srcb: int
-                    The source bucket of the object
-                dstb: int
-                    The destination bucket of the object
-        """
+        """Return the moving objects and their source and destination buckets."""
         return []

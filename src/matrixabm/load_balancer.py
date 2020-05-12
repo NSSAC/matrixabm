@@ -6,7 +6,13 @@ The `LoadBalancer` encapsulates the agent load balancing logic.
 from abc import ABC, abstractmethod
 
 class LoadBalancer(ABC):
-    """Load Balancer interface."""
+    """Load Balancer interface.
+
+    Attributes
+    ----------
+    n_buckets : int
+        Number of buckets
+    """
 
     def __init__(self, n_buckets):
         """Initialize."""
@@ -22,11 +28,11 @@ class LoadBalancer(ABC):
 
         Parameters
         ----------
-        o: string/int
+        o : str or int
             ID of the object
-        la: float
+        la : float
             First component of object load (e.g. CPU usage)
-        lb: float
+        lb : float
             Second component of object load (e.g. Memory usage)
         """
 
@@ -36,7 +42,7 @@ class LoadBalancer(ABC):
 
         Parameters
         ----------
-        o: string/int
+        o : str or int
             ID of the object
         """
 
@@ -46,11 +52,11 @@ class LoadBalancer(ABC):
 
         Parameters
         ----------
-        o: string/int
+        o : str or int
             ID of the object
-        la: float
+        la : float
             First component of object load (e.g. CPU usage)
-        lb: float
+        lb : float
             Second component of object load (e.g. Memory usage)
         """
 
@@ -65,9 +71,9 @@ class LoadBalancer(ABC):
         Returns
         -------
         list of two tuples [(o, b])
-            o: string/int
+            o : str or int
                 ID of the object
-            b: int
+            b : int
                 The bucket of the object
         """
 
@@ -78,10 +84,10 @@ class LoadBalancer(ABC):
         Returns
         -------
         list of three tuples [(o, srcb, dstb])
-            o: string/int
+            o : str or int
                 ID of the object
-            srcb: int
+            srcb : int
                 The source bucket of the object
-            dstb: int
+            dstb : int
                 The destination bucket of the object
         """

@@ -4,7 +4,7 @@ This load balancer on every balance step
 greedily moves objects from the most loaded bucket
 to the least loaded bucket.
 This process continues until the imbalance
-is below a tolerence threshold.
+is below a tolerance threshold.
 """
 
 import heapq
@@ -61,7 +61,7 @@ class GreedyLoadBalancer(LoadBalancer):
         """Remove an object."""
         b = self.object_bucket[o]
 
-        del self.object_lb[o]
+        del self.object_la[o]
         del self.object_lb[o]
 
         del self.object_bucket[o]
@@ -153,16 +153,7 @@ class GreedyLoadBalancer(LoadBalancer):
                 del self.object_bucket_prev[o]
 
     def get_new_objects(self):
-        """Return the bucket of the new objects.
-
-        Returns
-        -------
-            List of two tuples [(o, b])
-                o: string/int
-                    ID of the object
-                b: int  
-                    The bucket of the object
-        """
+        """Return the bucket of the new objects."""
         ret = []
         for o in self.new_objects:
             b = self.object_bucket[o]
@@ -170,18 +161,7 @@ class GreedyLoadBalancer(LoadBalancer):
         return ret
 
     def get_moving_objects(self):
-        """Return the moving objects and their source and dstination buckets.
-
-        Returns
-        -------
-            List of two tuples [(o, srcb, dstb])
-                o: string/int
-                    ID of the object
-                srcb: int  
-                    The source bucket of the object
-                dstb: int
-                    The destination bucket of the object
-        """
+        """Return the moving objects and their source and destination buckets."""
         ret = []
         for o in self.object_bucket_prev:
             srcb = self.object_bucket_prev[o]
