@@ -10,7 +10,8 @@ from matrixabm import asys, AID_MAIN
 from matrixabm import Constructor, StateUpdate
 from matrixabm import Agent, Population, Simulator
 from matrixabm import RangeTimestepGenerator
-from matrixabm import RandomLoadBalancer
+# from matrixabm import RandomLoadBalancer
+from matrixabm import GreedyLoadBalancer
 from matrixabm import SQLite3Store, SQLite3Connector
 
 STORE_NAME = "bluepill"
@@ -20,15 +21,15 @@ WORLD_SIZE = len(asys.ranks())
 class BluePillStore(SQLite3Store):
     """The BluePill State Store."""
 
-    def __init__(self, store_name):
+    def __init__(self, store_name, connector_name):
         """Initialize."""
-        super().__init__(store_name)
+        super().__init__(store_name, connector_name)
 
         self.setup()
 
     def setup(self):
         """Setup the state table."""
-        con = SQLite3Connector.connection()
+        con = asys.local_actor("connector").connection
         sql = f"""
             create table if not exists
             {self.store_name}.state (
@@ -40,14 +41,14 @@ class BluePillStore(SQLite3Store):
 
     def set_state(self, agent_id, state, step):
         """Set the agent state."""
-        con = SQLite3Connector.connection()
+        con = asys.local_actor("connector").connection
         sql = f"insert into {self.store_name}.state values (?,?,?)"
         con.execute(sql, (agent_id, state, step))
 
     @staticmethod
     def get_state(store_name, agent_id):
         """Get the state of the agent."""
-        con = SQLite3Connector.connection()
+        con = asys.local_actor("connector").connection
         sql = f"""
             select state
             from {store_name}.state
@@ -128,7 +129,7 @@ class BluePillSimulator(Simulator):
 
     def __init__(self, store_path):
         """Initialize."""
-        super().__init__()
+        super().__init__("tensorboard")
 
         self.store_path = store_path
 
@@ -142,12 +143,13 @@ class BluePillSimulator(Simulator):
 
     def StateStores(self):
         """Get the state store constructors."""
-        ctor = Constructor(BluePillStore, STORE_NAME)
+        ctor = Constructor(BluePillStore, STORE_NAME, "connector")
         return [(STORE_NAME, ctor)]
 
     def LoadBalancer(self):
         """Get the load balancer constructor."""
-        return Constructor(RandomLoadBalancer, WORLD_SIZE)
+        # return Constructor(RandomLoadBalancer, WORLD_SIZE)
+        return Constructor(GreedyLoadBalancer, WORLD_SIZE)
 
     def main(self):
         """Setup the connectors on the ranks."""
@@ -164,6 +166,7 @@ class BluePillSimulator(Simulator):
 @click.argument("store_path")
 def main(store_path):
     """Run the simulation."""
+
     asys.start(AID_MAIN, BluePillSimulator, store_path)
 
 

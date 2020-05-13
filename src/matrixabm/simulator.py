@@ -10,7 +10,7 @@ from time import time
 import xactor as asys
 
 from . import INFO_FINE
-from .summary_writer import get_summary_writer
+# from .summary_writer import get_summary_writer
 from .standard_actors import AID_POPULATION, AID_COORDINATOR, AID_RUNNER
 from .standard_actors import POPULATION, COORDINATOR, EVERY_RUNNER
 from .coordinator import Coordinator
@@ -35,8 +35,10 @@ class Simulator(ABC):
     * create_agents to Population
     """
 
-    def __init__(self):
+    def __init__(self, summary_writer_aname):
         """Initialize."""
+        self.summary_writer_aname = summary_writer_aname
+
         self.stores = []
         self.timestep_generator = None
 
@@ -59,7 +61,7 @@ class Simulator(ABC):
 
     def _write_summary(self):
         """Log the summary of activities."""
-        summary_writer = get_summary_writer()
+        summary_writer = asys.local_actor(self.summary_writer_aname)
         if summary_writer is None:
             return
 
@@ -126,7 +128,7 @@ class Simulator(ABC):
 
         # Create the coordinator
         balancer = self.LoadBalancer().construct()
-        asys.create_actor(asys.MASTER_RANK, AID_COORDINATOR, Coordinator, balancer)
+        asys.create_actor(asys.MASTER_RANK, AID_COORDINATOR, Coordinator, balancer, self.summary_writer_aname)
 
         # Create the state stores
         store_proxies = {}

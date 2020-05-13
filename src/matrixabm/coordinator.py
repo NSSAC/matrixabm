@@ -12,7 +12,7 @@ import numpy as np
 import xactor as asys
 
 from . import INFO_FINE
-from .summary_writer import get_summary_writer
+# from .summary_writer import get_summary_writer
 from .standard_actors import RUNNERS, EVERY_RUNNER, MAIN
 
 LOG = asys.getLogger(__name__)
@@ -39,15 +39,18 @@ class Coordinator:
     * coordinator_done to Simulator
     """
 
-    def __init__(self, balancer):
+    def __init__(self, balancer, summary_writer_aname):
         """Initialize.
 
         Parameters
         ----------
         balancer: LoadBalancer
             The agent load balancer
+        summary_writer_aname : str
+            The name of the local summary writer
         """
         self.balancer = balancer
+        self.summary_writer_aname = summary_writer_aname
 
         self.num_agents_created = 0
         self.num_agents_died = 0
@@ -90,7 +93,7 @@ class Coordinator:
 
     def _write_summary(self):
         """Log the summary of activites."""
-        summary_writer = get_summary_writer()
+        summary_writer = asys.local_actor(self.summary_writer_aname)
         if summary_writer is None:
             return
 
@@ -228,7 +231,7 @@ class Coordinator:
 
         Sender
         ------
-            population
+        * Population
         """
         assert not self.flag_create_agent_done
 
@@ -284,7 +287,7 @@ class Coordinator:
 
         Parameters
         ----------
-        rank: int
+        rank : int
             Rank of the agent runner
         """
         assert self.num_agent_step_profile_done < WORLD_SIZE
