@@ -12,7 +12,7 @@ from matrixabm import Agent, Population, Simulator
 from matrixabm import RangeTimestepGenerator
 # from matrixabm import RandomLoadBalancer
 from matrixabm import GreedyLoadBalancer
-from matrixabm import SQLite3Store, SQLite3Connector
+from matrixabm import SQLite3Store, SQLite3Manager
 from matrixabm.standard_actors import MAIN
 
 STORE_NAME = "bluepill"
@@ -156,9 +156,8 @@ class BluePillSimulator(Simulator):
         """Setup the connectors on the ranks."""
         for rank in asys.ranks():
             asys.create_actor(
-                rank, "connector", SQLite3Connector, [STORE_NAME], [self.store_path]
+                rank, "connector", SQLite3Manager, [STORE_NAME], [self.store_path]
             )
-        asys.ActorProxy(asys.EVERY_RANK, "connector").connect()
 
         super().main()
 
