@@ -10,7 +10,7 @@ For this purpose, the timestep generator can consult
 the local state store objects.
 
 At the beginning of every timestep,
-the Main actor calls the `get_next_timestep` method
+the Simulator actor calls the `get_next_timestep` method
 of the timestep generator.
 The method is supposed to return a `Timestep` object or None.
 In case it returns None, the simulation ends.

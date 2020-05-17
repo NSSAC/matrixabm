@@ -20,37 +20,37 @@ class Coordinator:
 
     Receives
     --------
-    * step from Simulator
-    * create_agent* from Population
-    * create_agent_done from Population
-    * agent_step_profile* from Runner
-    * agent_step_profile_done from Runner
+    * `step` from Simulator
+    * `create_agent*` from Population
+    * `create_agent_done` from Population
+    * `agent_step_profile*` from Runner
+    * `agent_step_profile_done` from Runner
 
     Sends
     -----
-    * create_agent* to Runner
-    * create_agent_done to Runner
-    * move_agent* to Runner
-    * move_agent_done to Runner
-    * coordinator_done to Simulator
+    * `create_agent*` to Runner
+    * `create_agent_done` to Runner
+    * `move_agent*` to Runner
+    * `move_agent_done` to Runner
+    * `coordinator_done` to Simulator
     """
 
-    def __init__(self, balancer, main_proxy, runner_aid, summary_writer_aid=None):
+    def __init__(self, balancer, simulator_proxy, runner_aid, summary_writer_aid=None):
         """Initialize.
 
         Parameters
         ----------
         balancer: LoadBalancer
             The agent load balancer
-        main_proxy : ActorProxy
-            The proxy for the main actor
+        simulator_proxy : ActorProxy
+            The proxy for the simulator actor
         runner_aid : str
             The ID of the runner actors
         summary_writer_aid : str
             The ID of the local summary writer actor
         """
         self.balancer = balancer
-        self.main_proxy = main_proxy
+        self.simulator_proxy = simulator_proxy
         self.runner_proxies = [
             asys.ActorProxy(rank, runner_aid) for rank in asys.ranks()
         ]
@@ -191,20 +191,17 @@ class Coordinator:
         if self.num_agent_step_profile_done < WORLD_SIZE:
             return
 
-        self.main_proxy.coordinator_done()
+        self.simulator_proxy.coordinator_done()
         self._write_summary()
         self._prepare_for_next_step()
 
     def step(self, timestep):
         """Log the start of the next timestep.
 
-        Sender
-        -----
-            The main actor
-
         Parameters
         ----------
-            timestep: The current (to start) timestep
+        timestep : Timestep
+            The current (to start) timestep
         """
         assert self.timestep is None
 
@@ -214,32 +211,23 @@ class Coordinator:
     def create_agent(self, agent_id, constructor, step_time, memory_usage):
         """Log an agent creation.
 
-        Sender
-        ------
-        Population
-
         Parameters
         ----------
-        agent_id: str
+        agent_id : str
             ID of the to be created agent
-        constructor: Constructor
+        constructor : Constructor
             Constructor of the agent
-        step_time: float
+        step_time : float
             Initial estimate step_time per unit simulated real time (in seconds)
-        memory_usage: float
-            Initial estimate of memory usage (in bytes)
+        memory_usage : float
+            Initial estimate of memory usage
         """
         self.agent_constructor[agent_id] = constructor
         self.balancer.add_object(agent_id, memory_usage, step_time)
         self.num_agents_created += 1
 
     def create_agent_done(self):
-        """Log that agent creation is done.
-
-        Sender
-        ------
-        * Population
-        """
+        """Log that agent creation is done."""
         assert not self.flag_create_agent_done
 
         self.flag_create_agent_done = True
@@ -250,23 +238,19 @@ class Coordinator:
     ):
         """Log an agent step profile.
 
-        Sender
-        ------
-        Runner
-
         Parameters
         ----------
-        rank: int
+        rank : int
             Rank of the agent runner
-        agent_id: str
+        agent_id : str
             ID of the dead agent
-        step_time: float
+        step_time : float
             Time taken by the agent to execute current timestep (in seconds)
-        memory_usage: float
-            Memory usage of the agent (in bytes)
-        n_updates: int
+        memory_usage : float
+            Memory usage of the agent
+        n_updates : int
             Number of updates produced by the agent
-        is_alive: bool
+        is_alive : bool
             True if agent will generate events in the future
         """
         self.rank_step_time[rank] += step_time
@@ -287,10 +271,6 @@ class Coordinator:
 
     def agent_step_profile_done(self, rank):
         """Log that a runner has completed the step.
-
-        Sender
-        ------
-        Runner
 
         Parameters
         ----------

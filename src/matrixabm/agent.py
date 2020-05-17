@@ -8,7 +8,7 @@ class Agent(ABC):
 
     The Agent interface models a single agent in the simulation.
     Agents in the Matrix are not actors themselves.
-    They are managerd by a agent runner actor.
+    They are managed by a agent runner actor.
     The agent runner actor calls the `step`, `is_alive` and `memory_usage`
     methods of the agent at each timestep.
     """
@@ -41,7 +41,7 @@ class Agent(ABC):
 
     @abstractmethod
     def memory_usage(self):
-        """Check the memory usage of the agent.
+        """Return the memory usage of the agent.
 
         Returns
         -------
@@ -57,7 +57,7 @@ class AgentPopulation(ABC):
     The agent population models births of agents.
     There is a single agent population actor in every simulation.
     At the beginning of every timestep
-    the main actor sends it the `create_agents` message
+    the simulator actor sends it the `create_agents` message
     On receiving the above message the population actor
     is supposed send a number of `create_agent` messages
     to the coordinator actor,
@@ -68,12 +68,12 @@ class AgentPopulation(ABC):
 
     Receives
     --------
-    * create_agents from Simulator
+    * `create_agents` from Simulator
 
     Sends
     -----
-    * create_agent* to Coordinator
-    * create_agent_done to Coordinator
+    * `create_agent*` to Coordinator
+    * `create_agent_done` to Coordinator
     """
 
     def __init__(self, coordinator_proxy):
@@ -88,10 +88,6 @@ class AgentPopulation(ABC):
 
     def create_agents(self, timestep):
         """Create new agents in the simulation.
-
-        Sender
-        ------
-        * Simulator
 
         Parameters
         ----------

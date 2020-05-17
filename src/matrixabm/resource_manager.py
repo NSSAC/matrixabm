@@ -27,11 +27,6 @@ class SQLite3Manager:
         List of sqlite3 paths corresponding the database names
     connection : sqlite3.Connection
         The sqlite3 connection object
-
-    Receives
-    --------
-    * connect from Main
-    * close from Main
     """
 
     def __init__(self, dbnames, dsns):
@@ -53,12 +48,7 @@ class SQLite3Manager:
         self.close()
 
     def close(self):
-        """Close the sqlite3 connection.
-
-        Sender
-        ------
-        * Main
-        """
+        """Close the sqlite3 connection."""
         if self.connection is None:
             return
 
@@ -96,12 +86,7 @@ class TensorboardWriter:
         self.close()
 
     def close(self):
-        """Close the summary writer.
-
-        Sender
-        ------
-        * Main
-        """
+        """Close the summary writer."""
         if self.summary_writer is None:
             return
 

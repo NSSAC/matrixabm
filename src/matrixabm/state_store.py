@@ -3,8 +3,7 @@
 The shared state of a Matrix simulation is stored in state store objects.
 A Matrix simulation can have one or more state store objects.
 Every state store object has a unique name.
-Every state store object is replicated on every compute node
-running the simulation.
+Every state store object is replicated on every compute node running the simulation.
 A state store actor manages a state store object.
 Thus there is a state store actor on every compute node
 for every state store object.
@@ -22,6 +21,9 @@ it executes its `flush` method.
 During the flush,
 all the cached updates are to be "applied"
 to the underlying state store object.
+
+Once the cached updates are flushed,
+the store informs the Simulator that it is done.
 """
 
 from time import perf_counter
@@ -29,9 +31,7 @@ from abc import ABC, abstractmethod
 
 import xactor as asys
 
-from . import INFO_FINE
-
-WORLD_SIZE = len(asys.ranks())
+from . import INFO_FINE, WORLD_SIZE
 
 
 class StateStore(ABC):
@@ -39,12 +39,12 @@ class StateStore(ABC):
 
     Receives
     --------
-    * handle_update* from Runner
-    * handle_update_done from Runner
+    * `handle_update*` from Runner
+    * `handle_update_done` from Runner
 
     Sends
     -----
-    * store_flush_done to Simulator
+    * `store_flush_done` to Simulator
     """
 
     def __init__(self, store_name, simulator_proxy):
@@ -69,10 +69,6 @@ class StateStore(ABC):
     def handle_update(self, update):
         """Handle incoming update.
 
-        Sender
-        ------
-        Runner
-
         Parameters
         ----------
         update : StateUpdate
@@ -81,10 +77,6 @@ class StateStore(ABC):
 
     def handle_update_done(self, rank):
         """Respond to `handle_update_done` message from a agent runner.
-
-        Sender
-        ------
-        Runner
 
         Parameters
         ----------
@@ -123,10 +115,11 @@ class StateStore(ABC):
     def flush(self):
         """Apply the received updates to state store."""
 
+
 class SQLite3Store(StateStore):
     """SQLite3 database file backed state store."""
 
-    def __init__(self, store_name, simulator_proxy, connector_aid):
+    def __init__(self, store_name, simulator_proxy, sqlite3_aid):
         """Initialize.
 
         Parameters
@@ -135,19 +128,19 @@ class SQLite3Store(StateStore):
             Name of the current state store
         simulator_proxy : ActorProxy
             Proxy of the simulator actor
-        connector_aid : str
-            ID of the local SQLite3 connector
+        sqlite3_aid : str
+            ID of the local SQLite3 connection manager
         """
         super().__init__(store_name, simulator_proxy)
 
-        self.connector_aid = connector_aid
+        self.sqlite3_aid = sqlite3_aid
         self.insert_sql_cache = {}
         self.insert_or_ignore_sql_cache = {}
         self.update_cache = []
 
     def connection(self):
-        """Get the connection to the local sqlite3 connector object."""
-        return asys.local_actor(self.connector_aid).connection
+        """Get the connection from the local SQLite3 manager object."""
+        return asys.local_actor(self.sqlite3_aid).connection
 
     def handle_update(self, update):
         """Handle incoming update."""

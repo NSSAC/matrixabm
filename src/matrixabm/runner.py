@@ -14,26 +14,26 @@ class Runner:
 
     The agent runner is responsible for
     running the step method of the agents to produce updates
-    and sending them to the resposible state stores.
+    and sending them to the responsible state stores.
     It also sends the step profile info back to the coordinator.
     There is one runner actor per process/rank.
 
     Receives
     --------
-    * step from Simulator
-    * create_agent* from Coordinator
-    * create_agent_done from Coordinator
-    * move_agent* from Coordinator
-    * move_agent_done from Coordinator
-    * receive_agent* from Runner(s)
-    * receive_agent_done from Runner(s)
+    * `step` from Simulator
+    * `create_agent*` from Coordinator
+    * `create_agent_done` from Coordinator
+    * `move_agent*` from Coordinator
+    * `move_agent_done` from Coordinator
+    * `receive_agent*` from Runner(s)
+    * `receive_agent_done` from Runner(s)
 
     Sends
     -----
-    * handle_update* to StateStore(s)
-    * handle_update_done to StateStore(s)
-    * agent_step_profile to Coordinator
-    * agent_step_profile_done to Coordinator
+    * `handle_update*` to StateStore(s)
+    * `handle_update_done` to StateStore(s)
+    * `agent_step_profile` to Coordinator
+    * `agent_step_profile_done` to Coordinator
     """
 
     def __init__(self, store_proxies, coordinator_proxy, runner_aid):
@@ -140,10 +140,6 @@ class Runner:
     def step(self, timestep):
         """Respond to the step signal from the simulator.
 
-        Sender
-        -----
-        Simulator
-
         Parameters
         ----------
         timestep : Timestep
@@ -156,10 +152,6 @@ class Runner:
 
     def create_agent(self, agent_id, constructor):
         """Create an agent locally.
-
-        Sender
-        ------
-        Coordinator
 
         Parameters
         ----------
@@ -177,12 +169,7 @@ class Runner:
         self.local_agents[agent_id] = constructor.construct()
 
     def create_agent_done(self):
-        """Respond to create event done message from coordinator.
-
-        Sender
-        ------
-        Coordinator
-        """
+        """Respond to create event done message from coordinator."""
         assert not self.flag_create_agent_done
 
         self.flag_create_agent_done = True
@@ -190,10 +177,6 @@ class Runner:
 
     def move_agent(self, agent_id, dst_rank):
         """Send local agents to destination ranks.
-
-        Sender
-        ------
-        Coordinator
 
         Parameters
         ----------
@@ -214,12 +197,7 @@ class Runner:
         del self.local_agents[agent_id]
 
     def move_agent_done(self):
-        """Respond to move agents done message from coordinator.
-
-        Sender
-        ------
-        Coordinator
-        """
+        """Respond to move agents done message from coordinator."""
         assert not self.flag_move_agents_done
         self.flag_move_agents_done = True
 
@@ -229,16 +207,12 @@ class Runner:
     def receive_agent(self, agent_id, agent):
         """Receive an agent from another worker process.
 
-        Sender
-        ------
-        Runner
-
         Parameters
         ----------
         agent_id : str
             ID of the incoming agent
         agent : Agent
-            The acutal agent itself
+            The actual agent itself
         """
         if __debug__:
             if agent_id in self.local_agents:
@@ -250,10 +224,6 @@ class Runner:
 
     def receive_agent_done(self, rank):
         """Respond to receive agent done message from other agent steppers.
-
-        Sender
-        ------
-        Runner
 
         Parameters
         ----------
