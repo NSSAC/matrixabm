@@ -8,12 +8,12 @@ import click
 
 from matrixabm import asys, AID_MAIN
 from matrixabm import Constructor, StateUpdate
-from matrixabm import Agent, Population, Simulator
+from matrixabm import Agent, AgentPopulation, Simulator
 from matrixabm import RangeTimestepGenerator
 # from matrixabm import RandomLoadBalancer
 from matrixabm import GreedyLoadBalancer
 from matrixabm import SQLite3Store, SQLite3Manager
-from matrixabm.standard_actors import MAIN
+from matrixabm.standard_actors import MAIN, COORDINATOR
 
 STORE_NAME = "bluepill"
 WORLD_SIZE = len(asys.ranks())
@@ -106,8 +106,11 @@ class BluePillAgent(Agent):
         return random.choice((True, False))
 
 
-class BluePillPopulation(Population):
+class BluePillPopulation(AgentPopulation):
     """Blue Pill Agent Population."""
+
+    def __init__(self):
+        super().__init__(COORDINATOR)
 
     def do_create_agents(self, timestep):
         """Create the new agents for this timestep."""

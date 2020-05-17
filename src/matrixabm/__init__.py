@@ -11,8 +11,7 @@ import xactor as asys
 from .standard_actors import AID_MAIN
 from .datatypes import Timestep, Constructor, StateUpdate
 
-from .agent import Agent
-from .population import Population
+from .agent import Agent, AgentPopulation
 from .simulator import Simulator
 
 from .timestep_generator import TimestepGenerator, RangeTimestepGenerator
