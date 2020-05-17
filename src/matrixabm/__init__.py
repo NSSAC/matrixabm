@@ -22,5 +22,4 @@ from .state_store import StateStore
 from .sqlite3_state_store import SQLite3Store
 from .sqlite3_connector import SQLite3Connector
 
-from .random_load_balancer import RandomLoadBalancer
-from .greedy_load_balancer import GreedyLoadBalancer
+from .load_balancer import RandomLoadBalancer, GreedyLoadBalancer
