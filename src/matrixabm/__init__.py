@@ -15,8 +15,7 @@ from .agent import Agent
 from .population import Population
 from .simulator import Simulator
 
-from .timestep_generator import TimestepGenerator
-from .range_timestep_generator import RangeTimestepGenerator
+from .timestep_generator import TimestepGenerator, RangeTimestepGenerator
 
 from .state_store import StateStore
 from .sqlite3_state_store import SQLite3Store
