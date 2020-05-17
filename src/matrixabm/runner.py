@@ -1,6 +1,6 @@
 """Agent runner."""
 
-from time import time
+from time import perf_counter
 
 import xactor as asys
 
@@ -95,7 +95,7 @@ class Runner:
 
         # Step through the agents
         for agent_id, agent in self.local_agents.items():
-            start_time = time()
+            start_time = perf_counter()
 
             # Step through the agent
             updates = agent.step(self.timestep)
@@ -109,7 +109,7 @@ class Runner:
                 store_name = update.store_name
                 store = self.store_proxies[store_name]
                 store.handle_update(update)
-            end_time = time()
+            end_time = perf_counter()
 
             # Inform the coordinator
             self.coordinator_proxy.agent_step_profile(

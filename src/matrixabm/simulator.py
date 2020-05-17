@@ -5,7 +5,7 @@ It creates the actors and sends messages to them to start the rounds.
 """
 
 from abc import ABC, abstractmethod
-from time import time
+from time import perf_counter
 
 import xactor as asys
 
@@ -96,7 +96,7 @@ class Simulator(ABC):
                     return
 
         if not starting:
-            self.round_end_time = time()
+            self.round_end_time = perf_counter()
             self._write_summary()
 
         self.timestep = self.timestep_generator.get_next_timestep()
@@ -104,7 +104,7 @@ class Simulator(ABC):
             LOG.info("Simulation finished.")
             asys.stop()
             return
-        self.round_start_time = time()
+        self.round_start_time = perf_counter()
         self.round_end_time = None
 
         LOG.info("Starting timestep %f", self.timestep.step)

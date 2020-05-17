@@ -1,6 +1,6 @@
 """Agent coordinator."""
 
-from time import time
+from time import perf_counter
 import numpy as np
 
 import xactor as asys
@@ -161,9 +161,9 @@ class Coordinator:
         if not self.flag_create_agent_done:
             return
 
-        start_time = time()
+        start_time = perf_counter()
         self.balancer.balance()
-        self.balancing_time = time() - start_time
+        self.balancing_time = perf_counter() - start_time
 
         for agent_id, rank in self.balancer.get_new_objects():
             constructor = self.agent_constructor[agent_id]

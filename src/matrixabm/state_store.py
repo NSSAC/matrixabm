@@ -24,7 +24,7 @@ all the cached updates are to be "applied"
 to the underlying state store object.
 """
 
-from time import time
+from time import perf_counter
 from abc import ABC, abstractmethod
 
 import xactor as asys
@@ -109,9 +109,9 @@ class StateStore(ABC):
         if self.num_handle_update_done < WORLD_SIZE:
             return
 
-        start_time = time()
+        start_time = perf_counter()
         self.flush()
-        flush_time = time() - start_time
+        flush_time = perf_counter() - start_time
 
         self.simulator_proxy.store_flush_done(
             self.store_name, asys.current_rank(), flush_time,
