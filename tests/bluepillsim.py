@@ -13,6 +13,7 @@ from matrixabm import RangeTimestepGenerator
 # from matrixabm import RandomLoadBalancer
 from matrixabm import GreedyLoadBalancer
 from matrixabm import SQLite3Store, SQLite3Connector
+from matrixabm.standard_actors import MAIN
 
 STORE_NAME = "bluepill"
 WORLD_SIZE = len(asys.ranks())
@@ -23,7 +24,7 @@ class BluePillStore(SQLite3Store):
 
     def __init__(self, store_name, connector_name):
         """Initialize."""
-        super().__init__(store_name, connector_name)
+        super().__init__(store_name, MAIN, connector_name)
 
         self.setup()
 

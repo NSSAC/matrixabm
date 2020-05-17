@@ -30,7 +30,6 @@ from abc import ABC, abstractmethod
 import xactor as asys
 
 from . import INFO_FINE
-from .standard_actors import MAIN
 
 WORLD_SIZE = len(asys.ranks())
 
@@ -48,10 +47,21 @@ class StateStore(ABC):
     * store_flush_done to Simulator
     """
 
-    def __init__(self, store_name):
-        """Initialize."""
+    def __init__(self, store_name, simulator_proxy):
+        """Initialize.
+
+        Parameters
+        ----------
+        store_name : str
+            Name of the current state store
+        simulator_proxy : ActorProxy
+            Proxy of the simulator actor
+        """
         self.store_name = store_name
-        self.log = asys.getLogger("%s.%s" % (self.__class__.__name__, self.store_name))
+        self.simulator_proxy = simulator_proxy
+
+        logger_name = "%s.%s" % (self.__class__.__name__, self.store_name)
+        self.log = asys.getLogger(logger_name)
 
         self.num_handle_update_done = 0
 
@@ -62,7 +72,6 @@ class StateStore(ABC):
         Sender
         ------
         Runner
-
 
         Parameters
         ----------
@@ -84,7 +93,7 @@ class StateStore(ABC):
         """
         assert self.num_handle_update_done < WORLD_SIZE
         if __debug__:
-            self.log.debug("Agent runner on %d is done", rank)
+            self.log.debug("Received all updates from rand %d", rank)
 
         self.num_handle_update_done += 1
         self._try_flush()
@@ -104,7 +113,7 @@ class StateStore(ABC):
         self.flush()
         flush_time = time() - start_time
 
-        MAIN.store_flush_done(
+        self.simulator_proxy.store_flush_done(
             self.store_name, asys.current_rank(), flush_time,
         )
 
@@ -113,3 +122,108 @@ class StateStore(ABC):
     @abstractmethod
     def flush(self):
         """Apply the received updates to state store."""
+
+class SQLite3Store(StateStore):
+    """SQLite3 database file backed state store."""
+
+    def __init__(self, store_name, simulator_proxy, connector_aid):
+        """Initialize.
+
+        Parameters
+        ----------
+        store_name : str
+            Name of the current state store
+        simulator_proxy : ActorProxy
+            Proxy of the simulator actor
+        connector_aid : str
+            ID of the local SQLite3 connector
+        """
+        super().__init__(store_name, simulator_proxy)
+
+        self.connector_aid = connector_aid
+        self.insert_sql_cache = {}
+        self.insert_or_ignore_sql_cache = {}
+        self.update_cache = []
+
+    def connection(self):
+        """Get the connection to the local sqlite3 connector object."""
+        return asys.local_actor(self.connector_aid).connection
+
+    def handle_update(self, update):
+        """Handle incoming update."""
+        self.update_cache.append(update)
+
+    def flush(self):
+        """Apply the updates."""
+        self.log.log(INFO_FINE, "Sorting %d updates", len(self.update_cache))
+        self.update_cache.sort()
+
+        self.log.log(INFO_FINE, "Applying %d updates", len(self.update_cache))
+        con = self.connection()
+        with con:
+            for update in self.update_cache:
+                update.apply(self)
+
+        self.update_cache.clear()
+
+    def execute(self, sql, params=None):
+        """Execute the given sql.
+
+        Parameters
+        ----------
+        sql : str
+            SQL statement to execute
+        params : tuple or None
+            Optional parameters of the sql statement.
+        """
+        con = self.connection()
+        try:
+            if params is None:
+                return con.execute(sql)
+            else:
+                return con.execute(sql, params)
+        except Exception:
+            self.log.error("Error executing sql:\n%s\nparams=%r", sql, params)
+            raise
+
+    def insert(self, table, *params):
+        """Execute an insert statement.
+
+        Parameters
+        ----------
+        table : str
+            Table to insert into
+        *params : tuple
+            Values to insert into table
+        """
+        if table in self.insert_sql_cache:
+            sql = self.insert_sql_cache[table]
+        else:
+            sql = "insert into %s.%s values (%s)"
+            marks = ["?"] * len(params)
+            marks = ",".join(marks)
+            sql = sql % (self.store_name, table, marks)
+            self.insert_sql_cache[table] = sql
+
+        return self.execute(sql, params)
+
+    def insert_or_ignore(self, table, *params):
+        """Execute an insert or ignore statement.
+
+        Parameters
+        ----------
+        table : str
+            Table to insert into.
+        *params : tuple
+            Values to insert into table.
+        """
+        if table in self.insert_or_ignore_sql_cache:
+            sql = self.insert_sql_cache[table]
+        else:
+            sql = "insert or ignore into %s.%s values (%s)"
+            marks = ["?"] * len(params)
+            marks = ",".join(marks)
+            sql = sql % (self.store_name, table, marks)
+            self.insert_sql_cache[table] = sql
+
+        return self.execute(sql, params)

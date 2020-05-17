@@ -17,8 +17,7 @@ from .simulator import Simulator
 
 from .timestep_generator import TimestepGenerator, RangeTimestepGenerator
 
-from .state_store import StateStore
-from .sqlite3_state_store import SQLite3Store
+from .state_store import StateStore, SQLite3Store
 from .sqlite3_connector import SQLite3Connector
 
 from .load_balancer import RandomLoadBalancer, GreedyLoadBalancer
