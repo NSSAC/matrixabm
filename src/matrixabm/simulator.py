@@ -11,7 +11,7 @@ import xactor as asys
 
 from . import INFO_FINE
 # from .summary_writer import get_summary_writer
-from .standard_actors import AID_POPULATION, AID_COORDINATOR, AID_RUNNER
+from .standard_actors import AID_POPULATION, AID_COORDINATOR, AID_RUNNER, MAIN
 from .standard_actors import POPULATION, COORDINATOR, EVERY_RUNNER
 from .coordinator import Coordinator
 from .runner import Runner
@@ -128,7 +128,7 @@ class Simulator(ABC):
 
         # Create the coordinator
         balancer = self.LoadBalancer().construct()
-        asys.create_actor(asys.MASTER_RANK, AID_COORDINATOR, Coordinator, balancer, self.summary_writer_aname)
+        asys.create_actor(asys.MASTER_RANK, AID_COORDINATOR, Coordinator, balancer, MAIN, AID_RUNNER, self.summary_writer_aname)
 
         # Create the state stores
         store_proxies = {}

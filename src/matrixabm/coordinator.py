@@ -1,26 +1,22 @@
-"""Agent coordinator.
-
-The agent coordinator is responsible for
-assigning agents to runners on different ranks
-and making sure the overall load is balanced.
-There is a single coordinator actor in every simulation.
-"""
+"""Agent coordinator."""
 
 from time import time
 import numpy as np
 
 import xactor as asys
 
-from . import INFO_FINE
-# from .summary_writer import get_summary_writer
-from .standard_actors import RUNNERS, EVERY_RUNNER, MAIN
+from . import INFO_FINE, WORLD_SIZE
 
 LOG = asys.getLogger(__name__)
-WORLD_SIZE = len(asys.ranks())
 
 
 class Coordinator:
     """Agent coordinator.
+
+    The agent coordinator is responsible for
+    assigning agents to runners on different ranks
+    while making sure the overall agent load is balanced.
+    There is a single coordinator actor in every simulation.
 
     Receives
     --------
@@ -39,18 +35,27 @@ class Coordinator:
     * coordinator_done to Simulator
     """
 
-    def __init__(self, balancer, summary_writer_aname):
+    def __init__(self, balancer, main_proxy, runner_aid, summary_writer_aid=None):
         """Initialize.
 
         Parameters
         ----------
         balancer: LoadBalancer
             The agent load balancer
-        summary_writer_aname : str
-            The name of the local summary writer
+        main_proxy : ActorProxy
+            The proxy for the main actor
+        runner_aid : str
+            The ID of the runner actors
+        summary_writer_aid : str
+            The ID of the local summary writer actor
         """
         self.balancer = balancer
-        self.summary_writer_aname = summary_writer_aname
+        self.main_proxy = main_proxy
+        self.runner_proxies = [
+            asys.ActorProxy(rank, runner_aid) for rank in asys.ranks()
+        ]
+        self.every_runner_proxy = asys.ActorProxy(asys.EVERY_RANK, runner_aid)
+        self.summary_writer_aid = summary_writer_aid
 
         self.num_agents_created = 0
         self.num_agents_died = 0
@@ -93,7 +98,9 @@ class Coordinator:
 
     def _write_summary(self):
         """Log the summary of activites."""
-        summary_writer = asys.local_actor(self.summary_writer_aname)
+        if self.summary_writer_aid is None:
+            return
+        summary_writer = asys.local_actor(self.summary_writer_aid)
         if summary_writer is None:
             return
 
@@ -160,12 +167,12 @@ class Coordinator:
 
         for agent_id, rank in self.balancer.get_new_objects():
             constructor = self.agent_constructor[agent_id]
-            RUNNERS[rank].create_agent(agent_id, constructor)
-        EVERY_RUNNER.create_agent_done()
+            self.runner_proxies[rank].create_agent(agent_id, constructor, buffer_=True)
+        self.every_runner_proxy.create_agent_done()
 
         for agent_id, src, dst in self.balancer.get_moving_objects():
-            RUNNERS[src].move_agent(agent_id, dst)
-        EVERY_RUNNER.move_agent_done()
+            self.runner_proxies[src].move_agent(agent_id, dst, buffer_=True)
+        self.every_runner_proxy.move_agent_done()
 
     def _try_finish_step(self):
         """Try to finish the step."""
@@ -184,7 +191,7 @@ class Coordinator:
         if self.num_agent_step_profile_done < WORLD_SIZE:
             return
 
-        MAIN.coordinator_done()
+        self.main_proxy.coordinator_done()
         self._write_summary()
         self._prepare_for_next_step()
 
