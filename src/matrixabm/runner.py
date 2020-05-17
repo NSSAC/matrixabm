@@ -1,25 +1,22 @@
-"""Agent runner.
-
-The agent runner is responsible for
-running the step method of the agents to produce updates
-and sending them to the resposible state stores.
-It also sends the step profile info back to the coordinator.
-There is one runner actor per process/rank.
-"""
+"""Agent runner."""
 
 from time import time
 
 import xactor as asys
 
-from . import INFO_FINE
-from .standard_actors import RUNNERS, EVERY_RUNNER, COORDINATOR
+from . import INFO_FINE, WORLD_SIZE
 
 LOG = asys.getLogger(__name__)
-WORLD_SIZE = len(asys.ranks())
 
 
 class Runner:
     """Agent runner.
+
+    The agent runner is responsible for
+    running the step method of the agents to produce updates
+    and sending them to the resposible state stores.
+    It also sends the step profile info back to the coordinator.
+    There is one runner actor per process/rank.
 
     Receives
     --------
@@ -39,16 +36,23 @@ class Runner:
     * agent_step_profile_done to Coordinator
     """
 
-    def __init__(self, store_proxies):
+    def __init__(self, store_proxies, coordinator_proxy, runner_aid):
         """Initialize the runner.
 
         Parameters
         ----------
-        store_proxies : dict [store_name -> actor proxy object]
+        store_proxies : dict [str -> ActorProxy]
             Actor proxy objects to stores
+        coordinator_proxy : ActorProxy
+            Proxy for the coordinator object
+        runner_aid : str
+            ID of the runner actors
         """
         self.local_agents = {}
         self.store_proxies = store_proxies
+        self.coordinator_proxy = coordinator_proxy
+        self.every_runner_proxy = asys.ActorProxy(asys.EVERY_RANK, runner_aid)
+        self.runner_proxies = [asys.ActorProxy(rank, runner_aid) for rank in asys.ranks()]
 
         # Step variables
         self.timestep = None
@@ -108,7 +112,7 @@ class Runner:
             end_time = time()
 
             # Inform the coordinator
-            COORDINATOR.agent_step_profile(
+            self.coordinator_proxy.agent_step_profile(
                 asys.current_rank(),
                 agent_id=agent_id,
                 step_time=(end_time - start_time),
@@ -122,7 +126,7 @@ class Runner:
             store.handle_update_done(asys.current_rank())
 
         # Tell the coordinator we are done
-        COORDINATOR.agent_step_profile_done(asys.current_rank())
+        self.coordinator_proxy.agent_step_profile_done(asys.current_rank())
 
         # Flush out any pending messages
         asys.flush()
@@ -205,7 +209,7 @@ class Runner:
                 )
 
         agent = self.local_agents[agent_id]
-        RUNNERS[dst_rank].receive_agent(agent_id, agent)
+        self.runner_proxies[dst_rank].receive_agent(agent_id, agent)
 
         del self.local_agents[agent_id]
 
@@ -219,7 +223,7 @@ class Runner:
         assert not self.flag_move_agents_done
         self.flag_move_agents_done = True
 
-        EVERY_RUNNER.receive_agent_done(asys.current_rank())
+        self.every_runner_proxy.receive_agent_done(asys.current_rank())
         self._try_start_step()
 
     def receive_agent(self, agent_id, agent):

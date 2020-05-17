@@ -152,7 +152,7 @@ class Simulator(ABC):
 
         # Create the runners
         for rank in asys.ranks():
-            asys.create_actor(rank, AID_RUNNER, Runner, store_proxies)
+            asys.create_actor(rank, AID_RUNNER, Runner, store_proxies, COORDINATOR, AID_RUNNER)
 
         self._try_start_step(starting=True)
 

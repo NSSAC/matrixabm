@@ -1,12 +1,10 @@
 """The Matrix ABM."""
 
 import logging
-
-SUMMARY_DIR_ENVVAR = "MATRIXABM_SUMMARY_DIR"
+import xactor as asys
 
 INFO_FINE = logging.INFO - 1
-
-import xactor as asys
+WORLD_SIZE = len(asys.ranks())
 
 from .standard_actors import AID_MAIN
 from .datatypes import Timestep, Constructor, StateUpdate
