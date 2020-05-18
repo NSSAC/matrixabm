@@ -1,46 +1,49 @@
-"""The Main Simulator.
+"""The Simulator."""
 
-The simulator is responsible for coordinating the overall simulation.
-It creates the actors and sends messages to them to start the rounds.
-"""
-
-from abc import ABC, abstractmethod
 from time import perf_counter
 
 import xactor as asys
 
 from . import INFO_FINE
-# from .summary_writer import get_summary_writer
-from .standard_actors import AID_POPULATION, AID_COORDINATOR, AID_RUNNER, MAIN
-from .standard_actors import POPULATION, COORDINATOR, EVERY_RUNNER
-from .coordinator import Coordinator
-from .runner import Runner
 
 LOG = asys.getLogger(__name__)
-WORLD_SIZE = len(asys.ranks())
 
 
-class Simulator(ABC):
-    """The main simulator.
+class Simulator:
+    """The Simulator.
+
+    The simulator is responsible for coordinating the overall simulation.
+    It expects all the actors have already been created.
 
     Receives
     --------
-    * store_flush_done from StateStore(s)
-    * coordinator_done from Coordinator
+    * `store_flush_done` from StateStore(s)
+    * `coordinator_done` from Coordinator
 
     Sends
     -----
-    * step to Coordinator
-    * step to Runner
-    * create_agents to Population
+    * `step` to Coordinator
+    * `step` to Runner
+    * `create_agents` to Population
     """
 
-    def __init__(self, summary_writer_aname):
+    def __init__(
+        self,
+        coordinator_aid,
+        runner_aid,
+        population_aid,
+        timestep_generator_aid,
+        store_names,
+        summary_writer_aid=None,
+    ):
         """Initialize."""
-        self.summary_writer_aname = summary_writer_aname
+        self.coordinator_proxy = asys.ActorProxy(asys.MASTER_RANK, coordinator_aid)
+        self.every_runner_proxy = asys.ActorProxy(asys.EVERY_RANK, runner_aid)
+        self.population_proxy = asys.ActorProxy(asys.MASTER_RANK, population_aid)
 
-        self.stores = []
-        self.timestep_generator = None
+        self.timestep_generator_aid = timestep_generator_aid
+        self.summary_writer_aid = summary_writer_aid
+        self.store_names = store_names
 
         self.timestep = None
         self.round_start_time = None
@@ -56,12 +59,14 @@ class Simulator(ABC):
     def _prepare_for_next_step(self):
         """Prepare for next step."""
         self.flag_coordinator_done = False
-        self.num_store_flush_done = {store_name: 0 for store_name in self.stores}
+        self.num_store_flush_done = {store_name: 0 for store_name in self.store_names}
         self.store_rank_flush_time = {}
 
     def _write_summary(self):
         """Log the summary of activities."""
-        summary_writer = asys.local_actor(self.summary_writer_aname)
+        if self.summary_writer_aid is None:
+            return
+        summary_writer = asys.local_actor(self.summary_writer_aid)
         if summary_writer is None:
             return
 
@@ -91,7 +96,7 @@ class Simulator(ABC):
             )
             if not self.flag_coordinator_done:
                 return
-            for store_name in self.stores:
+            for store_name in self.store_names:
                 if self.num_store_flush_done[store_name] < n_nodes:
                     return
 
@@ -99,7 +104,8 @@ class Simulator(ABC):
             self.round_end_time = perf_counter()
             self._write_summary()
 
-        self.timestep = self.timestep_generator.get_next_timestep()
+        timestep_generator = asys.local_actor(self.timestep_generator_aid)
+        self.timestep = timestep_generator.get_next_timestep()
         if self.timestep is None:
             LOG.info("Simulation finished.")
             asys.stop()
@@ -108,68 +114,26 @@ class Simulator(ABC):
         self.round_end_time = None
 
         LOG.info("Starting timestep %f", self.timestep.step)
-        POPULATION.create_agents(self.timestep)
-        COORDINATOR.step(self.timestep)
-        EVERY_RUNNER.step(self.timestep)
-        asys.flush()
+        self.population_proxy.create_agents(self.timestep)
+        self.coordinator_proxy.step(self.timestep)
+        self.every_runner_proxy.step(self.timestep)
 
         self._prepare_for_next_step()
 
-    def main(self):
+    def start(self):
         """Start the simulation."""
-        # Create the timestep generator
-        self.timestep_generator = self.TimestepGenerator().construct()
-
-        # Create the population actor
-        ctor = self.Population()
-        asys.create_actor(
-            asys.MASTER_RANK, AID_POPULATION, ctor.cls, *ctor.args, **ctor.kwargs
-        )
-
-        # Create the coordinator
-        balancer = self.LoadBalancer().construct()
-        asys.create_actor(asys.MASTER_RANK, AID_COORDINATOR, Coordinator, balancer, MAIN, AID_RUNNER, self.summary_writer_aname)
-
-        # Create the state stores
-        store_proxies = {}
-        for i, (store_name, ctor) in enumerate(self.StateStores()):
-            # Figure out where to place the stores
-            store_ranks = []
-            for node in asys.nodes():
-                ranks = asys.node_ranks(node)
-                rank = ranks[i % len(ranks)]
-                store_ranks.append(rank)
-
-            # Create the stores on those ranks
-            for rank in store_ranks:
-                asys.create_actor(rank, store_name, ctor.cls, *ctor.args, **ctor.kwargs)
-
-            # Create the store proxies
-            store_proxies[store_name] = asys.ActorProxy(store_ranks, store_name)
-
-            # Note the store
-            self.stores.append(store_name)
-
-        # Create the runners
-        for rank in asys.ranks():
-            asys.create_actor(rank, AID_RUNNER, Runner, store_proxies, COORDINATOR, AID_RUNNER)
-
         self._try_start_step(starting=True)
 
     def store_flush_done(self, store_name, rank, flush_time):
         """Log that the store flush for the given store was completed.
 
-        Sender
-        ------
-        StateStore(s)
-
         Parameters
         ----------
-        store_name: str
+        store_name : str
             Name of the state store
-        rank: int
+        rank : int
             The rank on which the store was running
-        flush_time:
+        flush_time : float
             Number of seconds taken by the flush operation.
         """
         if __debug__:
@@ -182,12 +146,7 @@ class Simulator(ABC):
         self._try_start_step(starting=False)
 
     def coordinator_done(self):
-        """Log that the coordinator has finished.
-
-        Sender
-        ------
-        Coordinator
-        """
+        """Log that the coordinator has finished."""
         if __debug__:
             LOG.debug("The coordinator is done with the current round")
 
@@ -195,46 +154,3 @@ class Simulator(ABC):
 
         self.flag_coordinator_done = True
         self._try_start_step(starting=False)
-
-    @abstractmethod
-    def TimestepGenerator(self):
-        """Get the timestep generator constructor.
-
-        Returns
-        -------
-        constructor: Constructor
-            Constructor of the timestep generator class
-        """
-
-    @abstractmethod
-    def Population(self):
-        """Get the population constructor.
-
-        Returns
-        -------
-        constructor: Constructor
-            Constructor of the population class
-        """
-
-    @abstractmethod
-    def StateStores(self):
-        """Get the state store constructors.
-
-        Returns
-        -------
-        List of 2 tuples [(store_name, constructor)]
-            store_name: str
-                Name of the state store
-            constructor: Constructor
-                Constructor of the state store class
-        """
-
-    @abstractmethod
-    def LoadBalancer(self):
-        """Get the load balancer constructor.
-
-        Returns
-        -------
-        constructor: LoadBalancer
-            Return an instance of the load balancer
-        """

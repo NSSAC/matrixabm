@@ -6,17 +6,39 @@ import logging
 
 import click
 
-from matrixabm import asys, AID_MAIN
-from matrixabm import Constructor, StateUpdate
-from matrixabm import Agent, AgentPopulation, Simulator
-from matrixabm import RangeTimestepGenerator
-# from matrixabm import RandomLoadBalancer
-from matrixabm import GreedyLoadBalancer
-from matrixabm import SQLite3Store, SQLite3Manager
-from matrixabm.standard_actors import MAIN, COORDINATOR
+from matrixabm import (
+    asys,
+    WORLD_SIZE,
+    Agent,
+    AgentPopulation,
+    RangeTimestepGenerator,
+    GreedyLoadBalancer,
+    StateUpdate,
+    SQLite3Store,
+    SQLite3Manager,
+    Coordinator,
+    Runner,
+    Simulator,
+    TensorboardWriter,
+    Constructor
+)
 
+# Standard Actor IDs
+AID_MAIN = "main"
+AID_POPULATION = "population"
+AID_COORDINATOR = "coordinator"
+AID_RUNNER = "runner"
+AID_TIMESTEP_GEN = "timestep_gen"
+AID_SUMMARY_WRITER = "summary_writer"
+AID_SQLITE3 = "sqlite3"
 STORE_NAME = "bluepill"
-WORLD_SIZE = len(asys.ranks())
+
+# Standard Actor Proxyies
+MAIN = asys.ActorProxy(asys.MASTER_RANK, AID_MAIN)
+POPULATION = asys.ActorProxy(asys.MASTER_RANK, AID_POPULATION)
+COORDINATOR = asys.ActorProxy(asys.MASTER_RANK, AID_COORDINATOR)
+RUNNERS = [asys.ActorProxy(rank, AID_RUNNER) for rank in asys.ranks()]
+EVERY_RUNNER = asys.ActorProxy(asys.EVERY_RANK, AID_RUNNER)
 
 
 class BluePillStore(SQLite3Store):
@@ -30,7 +52,7 @@ class BluePillStore(SQLite3Store):
 
     def setup(self):
         """Setup the state table."""
-        con = asys.local_actor("connector").connection
+        con = asys.local_actor(AID_SQLITE3).connection
         sql = f"""
             create table if not exists
             {self.store_name}.state (
@@ -42,14 +64,14 @@ class BluePillStore(SQLite3Store):
 
     def set_state(self, agent_id, state, step):
         """Set the agent state."""
-        con = asys.local_actor("connector").connection
+        con = asys.local_actor(AID_SQLITE3).connection
         sql = f"insert into {self.store_name}.state values (?,?,?)"
         con.execute(sql, (agent_id, state, step))
 
     @staticmethod
     def get_state(store_name, agent_id):
         """Get the state of the agent."""
-        con = asys.local_actor("connector").connection
+        con = asys.local_actor(AID_SQLITE3).connection
         sql = f"""
             select state
             from {store_name}.state
@@ -133,43 +155,58 @@ class BluePillSimulator(Simulator):
 
     def __init__(self, store_path):
         """Initialize."""
-        super().__init__("tensorboard")
+        super().__init__(
+            coordinator_aid=AID_COORDINATOR,
+            runner_aid=AID_RUNNER,
+            population_aid=AID_POPULATION,
+            timestep_generator_aid=AID_TIMESTEP_GEN,
+            store_names=[STORE_NAME],
+        )
 
         self.store_path = store_path
-
-    def TimestepGenerator(self):
-        """Get the timestep generator constructor."""
-        return Constructor(RangeTimestepGenerator, 10)
-
-    def Population(self):
-        """Get the population constructor."""
-        return Constructor(BluePillPopulation)
-
-    def StateStores(self):
-        """Get the state store constructors."""
-        ctor = Constructor(BluePillStore, STORE_NAME, "connector")
-        return [(STORE_NAME, ctor)]
-
-    def LoadBalancer(self):
-        """Get the load balancer constructor."""
-        # return Constructor(RandomLoadBalancer, WORLD_SIZE)
-        return Constructor(GreedyLoadBalancer, WORLD_SIZE)
 
     def main(self):
         """Setup the connectors on the ranks."""
         for rank in asys.ranks():
             asys.create_actor(
-                rank, "connector", SQLite3Manager, [STORE_NAME], [self.store_path]
+                rank, AID_SQLITE3, SQLite3Manager, [STORE_NAME], [self.store_path]
             )
 
-        super().main()
+        asys.create_actor(asys.MASTER_RANK, AID_TIMESTEP_GEN, RangeTimestepGenerator, 10)
+        asys.create_actor(asys.MASTER_RANK, AID_POPULATION, BluePillPopulation)
+        asys.create_actor(asys.MASTER_RANK, AID_SUMMARY_WRITER, TensorboardWriter, "./summary")
+
+        load_balancer = GreedyLoadBalancer(WORLD_SIZE)
+        asys.create_actor(
+            asys.MASTER_RANK,
+            AID_COORDINATOR,
+            Coordinator,
+            load_balancer,
+            MAIN,
+            AID_RUNNER,
+            AID_SUMMARY_WRITER
+        )
+
+        store_ranks = {STORE_NAME: []}
+        for node in asys.nodes():
+            rank = asys.node_ranks(node)[0]
+            store_ranks[STORE_NAME].append(rank)
+
+        store_proxies = {name: asys.ActorProxy(store_ranks[name], STORE_NAME) for name, ranks in store_ranks.items()}
+        store_proxies[STORE_NAME].create_actor_(BluePillStore, STORE_NAME, AID_SQLITE3)
+
+        for rank in asys.ranks():
+            asys.create_actor(
+                rank, AID_RUNNER, Runner, store_proxies, COORDINATOR, AID_RUNNER
+            )
+
+        asys.ActorProxy(asys.MASTER_RANK, AID_MAIN).start()
 
 
 @click.command()
 @click.argument("store_path")
 def main(store_path):
     """Run the simulation."""
-
     asys.start(AID_MAIN, BluePillSimulator, store_path)
 
 
