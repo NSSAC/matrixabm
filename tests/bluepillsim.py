@@ -20,7 +20,7 @@ from matrixabm import (
     Runner,
     Simulator,
     TensorboardWriter,
-    Constructor
+    Constructor,
 )
 
 # Standard Actor IDs
@@ -33,20 +33,13 @@ AID_SUMMARY_WRITER = "summary_writer"
 AID_SQLITE3 = "sqlite3"
 STORE_NAME = "bluepill"
 
-# Standard Actor Proxyies
-MAIN = asys.ActorProxy(asys.MASTER_RANK, AID_MAIN)
-POPULATION = asys.ActorProxy(asys.MASTER_RANK, AID_POPULATION)
-COORDINATOR = asys.ActorProxy(asys.MASTER_RANK, AID_COORDINATOR)
-RUNNERS = [asys.ActorProxy(rank, AID_RUNNER) for rank in asys.ranks()]
-EVERY_RUNNER = asys.ActorProxy(asys.EVERY_RANK, AID_RUNNER)
-
 
 class BluePillStore(SQLite3Store):
     """The BluePill State Store."""
 
     def __init__(self, store_name, connector_name):
         """Initialize."""
-        super().__init__(store_name, MAIN, connector_name)
+        super().__init__(store_name, AID_MAIN, connector_name)
 
         self.setup()
 
@@ -132,7 +125,7 @@ class BluePillPopulation(AgentPopulation):
     """Blue Pill Agent Population."""
 
     def __init__(self):
-        super().__init__(COORDINATOR)
+        super().__init__(AID_COORDINATOR)
 
     def do_create_agents(self, timestep):
         """Create the new agents for this timestep."""
@@ -153,7 +146,7 @@ class BluePillPopulation(AgentPopulation):
 class BluePillSimulator(Simulator):
     """Blue Pill Simulator."""
 
-    def __init__(self, store_path):
+    def __init__(self, store_path, summary_dir):
         """Initialize."""
         super().__init__(
             coordinator_aid=AID_COORDINATOR,
@@ -164,6 +157,7 @@ class BluePillSimulator(Simulator):
         )
 
         self.store_path = store_path
+        self.summary_dir = summary_dir
 
     def main(self):
         """Setup the connectors on the ranks."""
@@ -172,9 +166,13 @@ class BluePillSimulator(Simulator):
                 rank, AID_SQLITE3, SQLite3Manager, [STORE_NAME], [self.store_path]
             )
 
-        asys.create_actor(asys.MASTER_RANK, AID_TIMESTEP_GEN, RangeTimestepGenerator, 10)
+        asys.create_actor(
+            asys.MASTER_RANK, AID_TIMESTEP_GEN, RangeTimestepGenerator, 10
+        )
         asys.create_actor(asys.MASTER_RANK, AID_POPULATION, BluePillPopulation)
-        asys.create_actor(asys.MASTER_RANK, AID_SUMMARY_WRITER, TensorboardWriter, "./summary")
+        asys.create_actor(
+            asys.MASTER_RANK, AID_SUMMARY_WRITER, TensorboardWriter, self.summary_dir
+        )
 
         load_balancer = GreedyLoadBalancer(WORLD_SIZE)
         asys.create_actor(
@@ -182,9 +180,9 @@ class BluePillSimulator(Simulator):
             AID_COORDINATOR,
             Coordinator,
             load_balancer,
-            MAIN,
+            AID_MAIN,
             AID_RUNNER,
-            AID_SUMMARY_WRITER
+            AID_SUMMARY_WRITER,
         )
 
         store_ranks = {STORE_NAME: []}
@@ -192,12 +190,15 @@ class BluePillSimulator(Simulator):
             rank = asys.node_ranks(node)[0]
             store_ranks[STORE_NAME].append(rank)
 
-        store_proxies = {name: asys.ActorProxy(store_ranks[name], STORE_NAME) for name, ranks in store_ranks.items()}
+        store_proxies = {
+            name: asys.ActorProxy(store_ranks[name], STORE_NAME)
+            for name, ranks in store_ranks.items()
+        }
         store_proxies[STORE_NAME].create_actor_(BluePillStore, STORE_NAME, AID_SQLITE3)
 
         for rank in asys.ranks():
             asys.create_actor(
-                rank, AID_RUNNER, Runner, store_proxies, COORDINATOR, AID_RUNNER
+                rank, AID_RUNNER, Runner, store_proxies, AID_COORDINATOR, AID_RUNNER
             )
 
         asys.ActorProxy(asys.MASTER_RANK, AID_MAIN).start()
@@ -205,9 +206,10 @@ class BluePillSimulator(Simulator):
 
 @click.command()
 @click.argument("store_path")
-def main(store_path):
+@click.argument("summary_dir")
+def main(store_path, summary_dir):
     """Run the simulation."""
-    asys.start(AID_MAIN, BluePillSimulator, store_path)
+    asys.start(AID_MAIN, BluePillSimulator, store_path, summary_dir)
 
 
 if __name__ == "__main__":

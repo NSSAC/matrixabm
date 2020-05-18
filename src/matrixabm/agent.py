@@ -2,6 +2,8 @@
 
 from abc import ABC, abstractmethod
 
+from . import asys
+
 
 class Agent(ABC):
     """Agent interface.
@@ -76,15 +78,15 @@ class AgentPopulation(ABC):
     * `create_agent_done` to Coordinator
     """
 
-    def __init__(self, coordinator_proxy):
+    def __init__(self, coordinator_aid):
         """Initialize.
 
         Parameters
         ----------
-        coordinator_proxy : ActorProxy
-            Proxy for the agent coordinator actor
+        coordinator_aid : str
+            ID of the agent coordinator actor
         """
-        self.coordinator_proxy = coordinator_proxy
+        self.coordinator_proxy = asys.ActorProxy(asys.MASTER_RANK, coordinator_aid)
 
     def create_agents(self, timestep):
         """Create new agents in the simulation.

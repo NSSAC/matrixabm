@@ -36,21 +36,21 @@ class Runner:
     * `agent_step_profile_done` to Coordinator
     """
 
-    def __init__(self, store_proxies, coordinator_proxy, runner_aid):
+    def __init__(self, store_proxies, coordinator_aid, runner_aid):
         """Initialize the runner.
 
         Parameters
         ----------
         store_proxies : dict [str -> ActorProxy]
             Actor proxy objects to stores
-        coordinator_proxy : ActorProxy
-            Proxy for the coordinator object
+        coordinator_aid : str
+            ID of the coordinator actor
         runner_aid : str
             ID of the runner actors
         """
         self.local_agents = {}
         self.store_proxies = store_proxies
-        self.coordinator_proxy = coordinator_proxy
+        self.coordinator_proxy = asys.ActorProxy(asys.MASTER_RANK, coordinator_aid)
         self.every_runner_proxy = asys.ActorProxy(asys.EVERY_RANK, runner_aid)
         self.runner_proxies = [asys.ActorProxy(rank, runner_aid) for rank in asys.ranks()]
 

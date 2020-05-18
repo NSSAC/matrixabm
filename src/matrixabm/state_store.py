@@ -47,18 +47,18 @@ class StateStore(ABC):
     * `store_flush_done` to Simulator
     """
 
-    def __init__(self, store_name, simulator_proxy):
+    def __init__(self, store_name, simulator_aid):
         """Initialize.
 
         Parameters
         ----------
         store_name : str
             Name of the current state store
-        simulator_proxy : ActorProxy
+        simulator_aid : str
             Proxy of the simulator actor
         """
         self.store_name = store_name
-        self.simulator_proxy = simulator_proxy
+        self.simulator_proxy = asys.ActorProxy(asys.MASTER_RANK, simulator_aid)
 
         logger_name = "%s.%s" % (self.__class__.__name__, self.store_name)
         self.log = asys.getLogger(logger_name)

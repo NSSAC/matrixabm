@@ -35,22 +35,22 @@ class Coordinator:
     * `coordinator_done` to Simulator
     """
 
-    def __init__(self, balancer, simulator_proxy, runner_aid, summary_writer_aid=None):
+    def __init__(self, balancer, simulator_aid, runner_aid, summary_writer_aid=None):
         """Initialize.
 
         Parameters
         ----------
         balancer: LoadBalancer
             The agent load balancer
-        simulator_proxy : ActorProxy
-            The proxy for the simulator actor
+        simulator_aid : str
+            The ID of the simulator actor
         runner_aid : str
             The ID of the runner actors
         summary_writer_aid : str
             The ID of the local summary writer actor
         """
         self.balancer = balancer
-        self.simulator_proxy = simulator_proxy
+        self.simulator_proxy = asys.ActorProxy(asys.MASTER_RANK, simulator_aid)
         self.runner_proxies = [
             asys.ActorProxy(rank, runner_aid) for rank in asys.ranks()
         ]
