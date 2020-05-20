@@ -91,6 +91,11 @@ class Runner:
         if self.num_receive_agent_done < WORLD_SIZE:
             return
 
+        self.do_step()
+        self._prepare_for_next_step()
+
+    def do_step(self):
+        """Do the actual stepping through over local agents to produce updates."""
         dead_agents = []
 
         # Step through the agents
@@ -135,7 +140,6 @@ class Runner:
         for agent_id in dead_agents:
             del self.local_agents[agent_id]
 
-        self._prepare_for_next_step()
 
     def step(self, timestep):
         """Respond to the step signal from the simulator.
