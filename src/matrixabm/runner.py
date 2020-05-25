@@ -113,7 +113,7 @@ class Runner:
             for update in updates:
                 store_name = update.store_name
                 store = self.store_proxies[store_name]
-                store.handle_update(update)
+                store.handle_update(update, buffer_=True)
             end_time = perf_counter()
 
             # Inform the coordinator
@@ -124,6 +124,7 @@ class Runner:
                 memory_usage=memory_usage,
                 n_updates=len(updates),
                 is_alive=is_alive,
+                buffer_=True
             )
 
         # Tell stores that we are done for this step
@@ -132,9 +133,6 @@ class Runner:
 
         # Tell the coordinator we are done
         self.coordinator_proxy.agent_step_profile_done(asys.current_rank())
-
-        # Flush out any pending messages
-        asys.flush()
 
         # Delete any dead agents
         for agent_id in dead_agents:
